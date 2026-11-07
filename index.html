@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Kids Toy Cash Register 🛒 Pretend Play</title>
+  
+  <!-- Apple & PWA Mobile Capabilities -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Play Register">
+  <meta name="theme-color" content="#FF6B6B">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <!-- Google Font: Fredoka (Soft, rounded kid-friendly font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app-root">
+
+    <!-- Top Toy Bar: Logo & Audio Toggles -->
+    <header class="toy-top-bar">
+      <div class="brand-title">
+        <span class="brand-icon">🛒</span>
+        <span class="brand-text">PLAY REGISTER</span>
+      </div>
+      <div class="header-controls">
+        <button id="scanner-gun-btn" class="header-pill-btn laser-btn" aria-label="Scanner Gun">
+          ⚡ SCANNER
+        </button>
+        <button id="sfx-toggle-btn" class="header-pill-btn" aria-label="Toggle SFX">
+          🔊 SFX
+        </button>
+        <button id="music-toggle-btn" class="header-pill-btn music-btn" aria-label="Toggle Music">
+          🎵 Music
+        </button>
+        <button id="clear-cart-btn" class="header-pill-btn clear-btn" aria-label="Reset Cart">
+          🔄 Clear
+        </button>
+      </div>
+    </header>
+
+    <!-- Receipt Paper Spooler (Slides out from behind screen) -->
+    <div id="receipt-container" class="receipt-container receipt-hidden">
+      <div class="receipt-paper">
+        <div class="receipt-serrated-edge"></div>
+        <div id="receipt-body" class="receipt-body">
+          <!-- Filled by JS -->
+        </div>
+        <div class="receipt-tear-action">
+          <button id="tear-receipt-btn" class="tear-btn">✂️ Tear & Keep Receipt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Register Body -->
+    <main class="register-body">
+
+      <!-- Register Screen (Chunky POS Display) -->
+      <section class="register-screen-box">
+        <div class="screen-glare"></div>
+        <div class="screen-header">
+          <span class="screen-store-badge">⭐ SUPER TOY STORE</span>
+          <span id="screen-item-count" class="screen-item-count">0 items</span>
+        </div>
+        
+        <div class="screen-display-row">
+          <div class="screen-total-wrap">
+            <span class="total-label">TOTAL:</span>
+            <span id="screen-total" class="screen-total-val">$0.00</span>
+          </div>
+        </div>
+
+        <div id="screen-status-msg" class="screen-status-msg">
+          Welcome! Tap items or scan to start 🍎
+        </div>
+
+        <!-- Scrollable mini cart tray inside display -->
+        <div id="cart-items-list" class="cart-items-list">
+          <div class="empty-cart-msg">Your cart is empty! Press any item button below ⬇️</div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs (Items / Card / Cash / Keypad) -->
+      <nav class="mode-tabs-bar" role="tablist">
+        <button class="tab-btn active" data-tab="items">
+          <span class="tab-emoji">🍎</span>
+          <span class="tab-title">Items</span>
+        </button>
+        <button class="tab-btn" data-tab="card">
+          <span class="tab-emoji">💳</span>
+          <span class="tab-title">Card Machine</span>
+        </button>
+        <button class="tab-btn" data-tab="cash">
+          <span class="tab-emoji">💵</span>
+          <span class="tab-title">Cash Drawer</span>
+        </button>
+        <button class="tab-btn" data-tab="keypad">
+          <span class="tab-emoji">🔢</span>
+          <span class="tab-title">Keypad</span>
+        </button>
+      </nav>
+
+      <!-- TAB 1: QUICK ITEMS & SCANNER -->
+      <section id="tab-items" class="tab-panel active">
+        <div class="panel-header-strip">
+          <span class="strip-label">QUICK SCAN ITEMS</span>
+          <span class="strip-tip">Tap to add to cart!</span>
+        </div>
+        <div id="quick-items-grid" class="quick-items-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 2: PRETEND CREDIT CARD TERMINAL -->
+      <section id="tab-card" class="tab-panel">
+        <div class="pos-machine-wrapper">
+
+          <!-- Real POS Contactless Indicator & LEDs -->
+          <div class="pos-reader-header">
+            <div class="contactless-wave-icon">📶</div>
+            <div class="pos-leds-bar">
+              <span id="led-1" class="pos-led"></span>
+              <span id="led-2" class="pos-led"></span>
+              <span id="led-3" class="pos-led"></span>
+              <span id="led-4" class="pos-led"></span>
+            </div>
+            <div class="pos-chip-icon">💳</div>
+          </div>
+
+          <!-- POS Machine Display Screen -->
+          <div class="pos-screen">
+            <div class="pos-screen-amount">Amount Due: <span id="card-reader-amount">$0.00</span></div>
+            <div id="pos-screen-text" class="pos-screen-message">TAP, INSERT, OR SWIPE CARD</div>
+            <div id="pos-status-icon" class="pos-screen-icon">💳</div>
+          </div>
+
+          <!-- Giant Interactive Card Tap Zone -->
+          <div class="card-interaction-zone">
+            <div id="card-tap-pad" class="card-tap-pad" role="button" aria-label="Tap Card Here">
+              <div class="tap-glow-rings"></div>
+              <div class="tap-inner-content">
+                <span class="tap-huge-icon">💳</span>
+                <span class="tap-prompt-title">TAP ANY CARD HERE!</span>
+                <span class="tap-prompt-sub">Hold your toy card or tap with finger</span>
+              </div>
+            </div>
+
+            <!-- Draggable / Tappable Pretend Credit Card -->
+            <div id="interactive-pretend-card" class="pretend-card-widget">
+              <div class="card-chip"></div>
+              <div class="card-contactless-mark">📶</div>
+              <div class="card-bank-name">KIDS BANK VISA</div>
+              <div class="card-number">•••• •••• •••• 1234</div>
+              <div class="card-holder-name">SUPER SHOPPER</div>
+              <span class="tap-me-hint">👆 TAP TO PAY</span>
+            </div>
+          </div>
+
+          <!-- Alternate Card Actions: Chip Slot & Swipe Slot -->
+          <div class="pos-alt-actions">
+            <button id="card-chip-btn" class="alt-pos-btn chip-slot-btn">
+              <span class="btn-icon">📥</span>
+              <span class="btn-text">Insert Chip</span>
+            </button>
+            <button id="card-swipe-slot" class="alt-pos-btn swipe-slot-btn">
+              <span class="btn-icon">↔️</span>
+              <span class="btn-text">Swipe Card</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 3: PRETEND CASH REGISTER DRAWER -->
+      <section id="tab-cash" class="tab-panel">
+        <div class="cash-register-panel">
+          
+          <div class="cash-status-banner">
+            <div class="cash-amount-row">
+              <div class="cash-stat">
+                <span class="stat-sub">TOTAL DUE:</span>
+                <span id="cash-due-amount" class="stat-main">$0.00</span>
+              </div>
+              <div class="cash-stat">
+                <span class="stat-sub">PAID IN:</span>
+                <span id="cash-tendered-val" class="stat-main tender-color">$0.00</span>
+              </div>
+              <div class="cash-stat">
+                <span class="stat-sub">CHANGE:</span>
+                <span id="cash-change-val" class="stat-main change-color">$0.00</span>
+              </div>
+            </div>
+            <div id="cash-change-tip" class="cash-change-tip">Tap bills & coins or quick buttons to pay!</div>
+          </div>
+
+          <!-- Drawer Opener Bell Button -->
+          <div class="cash-bell-action">
+            <button id="open-drawer-btn" class="drawer-bell-btn">
+              🔔 POP OPEN CASH DRAWER (KA-CHING!)
+            </button>
+          </div>
+
+          <!-- Quick Cash Amounts -->
+          <div class="quick-cash-row">
+            <button class="quick-cash-btn exact-btn" data-cash="EXACT">⭐ Exact Cash</button>
+            <button class="quick-cash-btn" data-cash="1">+$1</button>
+            <button class="quick-cash-btn" data-cash="5">+$5</button>
+            <button class="quick-cash-btn" data-cash="10">+$10</button>
+            <button class="quick-cash-btn" data-cash="20">+$20</button>
+          </div>
+
+          <!-- Cash Tray / Drawer Compartments -->
+          <div id="cash-drawer-section" class="cash-drawer-tray">
+            <div class="drawer-handle">══════ CASH DRAWER ══════</div>
+
+            <!-- Paper Bills Compartment -->
+            <div class="bills-compartment">
+              <button class="drawer-money-btn bill-btn bill-1" data-val="1">
+                <span class="bill-denom">$1</span>
+                <span class="bill-label">ONE</span>
+              </button>
+              <button class="drawer-money-btn bill-btn bill-5" data-val="5">
+                <span class="bill-denom">$5</span>
+                <span class="bill-label">FIVE</span>
+              </button>
+              <button class="drawer-money-btn bill-btn bill-10" data-val="10">
+                <span class="bill-denom">$10</span>
+                <span class="bill-label">TEN</span>
+              </button>
+              <button class="drawer-money-btn bill-btn bill-20" data-val="20">
+                <span class="bill-denom">$20</span>
+                <span class="bill-label">TWENTY</span>
+              </button>
+            </div>
+
+            <!-- Coins Compartment -->
+            <div class="coins-compartment">
+              <button class="drawer-money-btn coin-btn coin-penny" data-val="0.01">
+                <span class="coin-val">1¢</span>
+                <span class="coin-label">Penny</span>
+              </button>
+              <button class="drawer-money-btn coin-btn coin-nickel" data-val="0.05">
+                <span class="coin-val">5¢</span>
+                <span class="coin-label">Nickel</span>
+              </button>
+              <button class="drawer-money-btn coin-btn coin-dime" data-val="0.10">
+                <span class="coin-val">10¢</span>
+                <span class="coin-label">Dime</span>
+              </button>
+              <button class="drawer-money-btn coin-btn coin-quarter" data-val="0.25">
+                <span class="coin-val">25¢</span>
+                <span class="coin-label">Quarter</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 4: MANUAL NUMPAD KEYPAD -->
+      <section id="tab-keypad" class="tab-panel">
+        <div class="keypad-panel-container">
+          <div class="keypad-input-box">
+            <span class="keypad-label">Custom Price:</span>
+            <span id="keypad-input-display" class="keypad-display-val">$0.00</span>
+          </div>
+
+          <div class="toy-keypad-grid">
+            <!-- Row 1 -->
+            <button class="kid-btn keypad-btn" data-key="7">7</button>
+            <button class="kid-btn keypad-btn" data-key="8">8</button>
+            <button class="kid-btn keypad-btn" data-key="9">9</button>
+            <button class="kid-btn keypad-btn clear-key" data-key="C">⌫ Clear</button>
+
+            <!-- Row 2 -->
+            <button class="kid-btn keypad-btn" data-key="4">4</button>
+            <button class="kid-btn keypad-btn" data-key="5">5</button>
+            <button class="kid-btn keypad-btn" data-key="6">6</button>
+            <!-- ENTER spans 3 rows (Rows 2, 3, and 4) down to the bottom -->
+            <button class="kid-btn keypad-btn enter-key" data-key="ENTER">
+              <span class="enter-icon">✅</span>
+              <span class="enter-text">ADD<br>ITEM</span>
+            </button>
+
+            <!-- Row 3 -->
+            <button class="kid-btn keypad-btn" data-key="1">1</button>
+            <button class="kid-btn keypad-btn" data-key="2">2</button>
+            <button class="kid-btn keypad-btn" data-key="3">3</button>
+
+            <!-- Row 4 -->
+            <button class="kid-btn keypad-btn" data-key="0">0</button>
+            <button class="kid-btn keypad-btn" data-key="00">00</button>
+            <button class="kid-btn keypad-btn dot-key" data-key=".">.</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Quick Action Dock -->
+    <footer class="toy-bottom-dock">
+      <button class="dock-action-btn pay-card-dock" onclick="window.app.switchTab('card')">
+        💳 SCAN CARD
+      </button>
+      <button class="dock-action-btn pay-cash-dock" onclick="window.app.switchTab('cash')">
+        💵 CASH / CHANGE
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- SCANNER MODAL (Camera or Pretend Laser Viewfinder) -->
+  <div id="scanner-modal" class="scanner-modal">
+    <div class="scanner-modal-backdrop"></div>
+    <div class="scanner-modal-content">
+
+      <div class="scanner-modal-header">
+        <span class="scanner-title">⚡ BARCODE SCANNER</span>
+        <button id="close-scanner-btn" class="scanner-close-btn" aria-label="Close scanner">×</button>
+      </div>
+
+      <!-- Camera viewfinder -->
+      <div class="scanner-viewfinder-box">
+        <video id="scanner-video" playsinline autoplay muted></video>
+
+        <div id="scanner-fallback-box" class="scanner-fallback-box">
+          <div class="pretend-barcode-graphic">
+            <div class="barcode-bars"></div>
+            <span class="barcode-num">4 012345 678901</span>
+          </div>
+        </div>
+
+        <div class="scanner-target-frame">
+          <div class="scanner-red-laser"></div>
+        </div>
+      </div>
+
+      <!-- Status / hint label -->
+      <p id="scanner-status-label" class="scanner-status-label">
+        📷 Allow camera to scan real barcodes, or type one below!
+      </p>
+
+      <!-- Manual barcode entry row -->
+      <div class="barcode-manual-row">
+        <input id="barcode-manual-input" class="barcode-manual-input"
+               type="number" inputmode="numeric" placeholder="Enter barcode number…"
+               aria-label="Manual barcode number">
+        <button id="barcode-lookup-btn" class="kid-btn barcode-lookup-btn">🔍 LOOK UP</button>
+      </div>
+
+      <!-- Product result card (shown after a lookup) -->
+      <div id="product-result-card" class="product-result-card" style="display:none;"></div>
+
+      <!-- Footer buttons -->
+      <div class="scanner-controls-footer">
+        <button id="trigger-scan-btn" class="kid-btn scanner-trigger-btn">
+          🔴 BEEP! Add Random Item
+        </button>
+        <p class="scanner-help-txt">Aim camera at a real box, or tap BEEP for pretend mode!</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ADD CUSTOM ITEM MODAL -->
+  <div id="custom-item-modal" class="custom-modal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="custom-modal-content">
+      <h3>➕ Create Your Own Item</h3>
+      <div class="form-group">
+        <label for="custom-item-name">Item Name:</label>
+        <input type="text" id="custom-item-name" placeholder="e.g. Robot Toy" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label for="custom-item-price">Price ($):</label>
+        <input type="number" id="custom-item-price" step="0.25" min="0.10" max="99" placeholder="2.50">
+      </div>
+      <div class="form-group">
+        <label for="custom-item-emoji">Emoji Icon:</label>
+        <input type="text" id="custom-item-emoji" value="🤖" maxlength="2">
+      </div>
+      <div class="modal-btn-row">
+        <button id="cancel-custom-item-btn" class="modal-secondary-btn">Cancel</button>
+        <button id="save-custom-item-btn" class="modal-primary-btn">Add to Store ⭐</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
