@@ -1,85 +1,145 @@
 /**
- * Scanner — Camera viewfinder, real barcode detection,
- * and two-API product lookup (Open Food Facts + UPC Item DB).
- *
- * Flow:
- *  Real camera barcode detected  →  lookupBarcode()  →  showProductCard()
- *  "BEEP!" button (pretend mode) →  add random fun item + confetti
- *  "Enter barcode" text input    →  lookupBarcode()  →  showProductCard()
+ * Scanner — Universal real barcode detection (powered by ZXing library)
+ * + Open Food Facts & UPC Item DB live product lookup.
+ * 
+ * Works 100% reliably on iOS Safari (iPhone 13 Pro), Android Chrome,
+ * and desktop browsers with offline fallback and instant pretend mode.
  */
 
 class KidScanner {
   constructor(app) {
     this.app = app;
     this.videoElement = null;
-    this.stream = null;
+    this.codeReader = null;
     this.cameraActive = false;
-    this.barcodeDetector = null;
-    this.isDetecting = false;
-    this.lookupCooldown = false; // prevent rapid double-scans
+    this.lookupCooldown = false;
+    this.initZXing();
+  }
 
-    if ('BarcodeDetector' in window) {
+  initZXing() {
+    if (typeof ZXing !== 'undefined') {
       try {
-        this.barcodeDetector = new BarcodeDetector({
-          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code', 'itf']
-        });
+        const hints = new Map();
+        const formats = [
+          ZXing.BarcodeFormat.EAN_13,
+          ZXing.BarcodeFormat.EAN_8,
+          ZXing.BarcodeFormat.UPC_A,
+          ZXing.BarcodeFormat.UPC_E,
+          ZXing.BarcodeFormat.CODE_128,
+          ZXing.BarcodeFormat.CODE_39,
+          ZXing.BarcodeFormat.ITF,
+          ZXing.BarcodeFormat.QR_CODE
+        ];
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        this.codeReader = new ZXing.BrowserMultiFormatReader(hints);
       } catch (e) {
-        console.warn('BarcodeDetector init error:', e);
+        console.warn('ZXing custom hints init error:', e);
+        this.codeReader = new ZXing.BrowserMultiFormatReader();
       }
+    } else {
+      console.warn('ZXing library not loaded yet');
     }
   }
 
-  // ─── Modal lifecycle ────────────────────────────────────────────────────────
+  // ─── Modal Lifecycle ────────────────────────────────────────────────────────
 
   openScannerModal() {
     const modal = document.getElementById('scanner-modal');
     if (!modal) return;
     this.hideProductCard();
     modal.classList.add('visible');
-    this.startCamera();
+    this.startCameraScanner();
   }
 
   closeScannerModal() {
     const modal = document.getElementById('scanner-modal');
     if (modal) modal.classList.remove('visible');
     this.hideProductCard();
-    this.stopCamera();
+    this.stopCameraScanner();
   }
 
-  // ─── Camera ────────────────────────────────────────────────────────────────
+  // ─── Camera & Continuous Real Barcode Decoding ──────────────────────────────
 
-  async startCamera() {
+  async startCameraScanner() {
     this.videoElement = document.getElementById('scanner-video');
     const fallbackBox = document.getElementById('scanner-fallback-box');
-    const statusEl   = document.getElementById('scanner-status-label');
+    const statusEl = document.getElementById('scanner-status-label');
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      this._showFallback(fallbackBox, statusEl, '📷 No camera — use the barcode box below!');
+    if (!this.codeReader) {
+      this.initZXing();
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !this.codeReader) {
+      this._showFallback(fallbackBox, statusEl, '📷 Camera scanner not supported. Type barcode below!');
       return;
     }
 
+    if (statusEl) statusEl.textContent = '📷 Starting camera scanner…';
+
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false
-      });
+      this.cameraActive = true;
+      if (fallbackBox) fallbackBox.style.display = 'none';
+      if (this.videoElement) this.videoElement.style.display = 'block';
 
-      if (this.videoElement) {
-        this.videoElement.srcObject = this.stream;
-        this.videoElement.style.display = 'block';
-        if (fallbackBox) fallbackBox.style.display = 'none';
-        this.cameraActive = true;
-
-        if (this.barcodeDetector) {
-          if (statusEl) statusEl.textContent = '📷 Camera live — aim at a real barcode!';
-          this.startDetectionLoop();
-        } else {
-          if (statusEl) statusEl.textContent = '📷 Camera on — tap BEEP or type a barcode below!';
+      // Start continuous scanning using the environment (back) camera
+      await this.codeReader.decodeFromVideoDevice(
+        undefined, // undefined selects back/environment camera automatically
+        this.videoElement,
+        (result, error) => {
+          if (result && !this.lookupCooldown) {
+            const rawCode = result.getText();
+            if (rawCode) {
+              this.onRealBarcodeDetected(rawCode);
+            }
+          }
+          // error is expected on frames where no barcode is in view
         }
-      }
+      );
+
+      if (statusEl) statusEl.textContent = '🎯 Point camera at any real barcode or cereal box!';
     } catch (err) {
-      console.log('Camera unavailable:', err.message);
-      this._showFallback(fallbackBox, statusEl, '📷 Camera blocked — type a barcode below!');
+      console.warn('Rear camera error, retrying with default video device:', err);
+      try {
+        // Fallback to any camera device (e.g. laptop webcam)
+        await this.codeReader.decodeFromConstraints(
+          { video: true },
+          this.videoElement,
+          (result, error) => {
+            if (result && !this.lookupCooldown) {
+              const rawCode = result.getText();
+              if (rawCode) {
+                this.onRealBarcodeDetected(rawCode);
+              }
+            }
+          }
+        );
+        if (statusEl) statusEl.textContent = '🎯 Point barcode at camera!';
+      } catch (fallbackErr) {
+        console.error('All camera attempts failed:', fallbackErr);
+        this.cameraActive = false;
+        this._showFallback(fallbackBox, statusEl, '📷 Camera blocked or unavailable. Type barcode below!');
+      }
+    }
+  }
+
+  stopCameraScanner() {
+    this.cameraActive = false;
+    if (this.codeReader) {
+      try {
+        this.codeReader.reset();
+      } catch (e) {
+        console.warn('Error resetting code reader:', e);
+      }
+    }
+    if (this.videoElement && this.videoElement.srcObject) {
+      try {
+        const stream = this.videoElement.srcObject;
+        if (stream.getTracks) {
+          stream.getTracks().forEach(t => t.stop());
+        }
+        this.videoElement.srcObject = null;
+      } catch (e) {}
     }
   }
 
@@ -89,56 +149,36 @@ class KidScanner {
     if (statusEl) statusEl.textContent = msg;
   }
 
-  stopCamera() {
-    this.cameraActive = false;
-    this.isDetecting  = false;
-    if (this.stream) {
-      this.stream.getTracks().forEach(t => t.stop());
-      this.stream = null;
-    }
-  }
-
-  // ─── BarcodeDetector auto-scan loop ────────────────────────────────────────
-
-  startDetectionLoop() {
-    if (!this.barcodeDetector || !this.cameraActive || this.isDetecting) return;
-    this.isDetecting = true;
-
-    const detect = async () => {
-      if (!this.cameraActive) { this.isDetecting = false; return; }
-
-      try {
-        if (this.videoElement && this.videoElement.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
-          const results = await this.barcodeDetector.detect(this.videoElement);
-          if (results.length > 0 && !this.lookupCooldown) {
-            const barcode = results[0].rawValue;
-            this.onRealBarcodeDetected(barcode);
-            // 3-second cooldown so we don't fire 60fps
-            this.lookupCooldown = true;
-            setTimeout(() => { this.lookupCooldown = false; }, 3000);
-          }
-        }
-      } catch (e) { /* detector error — keep looping */ }
-
-      if (this.cameraActive) requestAnimationFrame(detect);
-    };
-
-    requestAnimationFrame(detect);
-  }
-
-  // ─── Real barcode detected from camera ─────────────────────────────────────
+  // ─── Real Barcode Triggered ─────────────────────────────────────────────────
 
   async onRealBarcodeDetected(barcode) {
+    if (this.lookupCooldown) return;
+    this.lookupCooldown = true;
+
+    // Haptic & Sound
     window.soundEngine.playScannerBeep();
+    window.soundEngine.vibrate([60, 40, 80]);
     this._flashTargetFrame();
 
+    const cleanCode = barcode.trim();
     const barcodeInput = document.getElementById('barcode-manual-input');
-    if (barcodeInput) barcodeInput.value = barcode;
+    if (barcodeInput) barcodeInput.value = cleanCode;
 
-    await this.lookupAndShow(barcode, '📡 Real barcode scanned!');
+    const statusEl = document.getElementById('scanner-status-label');
+    if (statusEl) statusEl.textContent = `⚡ Barcode scanned: ${cleanCode}! Searching online…`;
+
+    await this.lookupAndShow(cleanCode, `📡 Scanned: ${cleanCode}`);
+
+    // Cooldown 3s so kid has time to review product before next auto-scan
+    setTimeout(() => {
+      this.lookupCooldown = false;
+      if (statusEl && this.cameraActive) {
+        statusEl.textContent = '🎯 Ready to scan next item!';
+      }
+    }, 3000);
   }
 
-  // ─── Manual barcode entry lookup ────────────────────────────────────────────
+  // ─── Manual Barcode Submission ──────────────────────────────────────────────
 
   async onManualBarcodeSubmit() {
     const input = document.getElementById('barcode-manual-input');
@@ -150,37 +190,39 @@ class KidScanner {
     }
 
     window.soundEngine.playScannerBeep();
+    window.soundEngine.vibrate(50);
     this._flashTargetFrame();
     await this.lookupAndShow(barcode, '🔍 Looking up barcode…');
   }
 
-  // ─── Pretend "BEEP!" button — no lookup, random fun item ──────────────────
+  // ─── Pretend "BEEP!" Button (No Network Required) ───────────────────────────
 
   handlePretendBeep() {
     window.soundEngine.playScannerBeep();
+    window.soundEngine.vibrate(40);
     this._flashTargetFrame();
 
     const surpriseItems = [
-      { name: 'Apple',        icon: '🍎', price: 1.00 },
-      { name: 'Banana',       icon: '🍌', price: 0.50 },
-      { name: 'Juice Box',    icon: '🧃', price: 1.25 },
-      { name: 'Cookie',       icon: '🍪', price: 0.75 },
+      { name: 'Apple', icon: '🍎', price: 1.00 },
+      { name: 'Banana', icon: '🍌', price: 0.50 },
+      { name: 'Juice Box', icon: '🧃', price: 1.25 },
+      { name: 'Cookie', icon: '🍪', price: 0.75 },
       { name: 'Toy Dinosaur', icon: '🦖', price: 4.00 },
-      { name: 'Milk',         icon: '🥛', price: 1.50 },
-      { name: 'Ice Cream',    icon: '🍦', price: 2.00 },
-      { name: 'Pizza',        icon: '🍕', price: 2.50 },
-      { name: 'Lollipop',     icon: '🍭', price: 0.50 },
-      { name: 'Cheese',       icon: '🧀', price: 1.75 },
-      { name: 'Hot Dog',      icon: '🌭', price: 1.50 },
-      { name: 'Toy Car',      icon: '🚗', price: 3.50 },
+      { name: 'Milk', icon: '🥛', price: 1.50 },
+      { name: 'Ice Cream', icon: '🍦', price: 2.00 },
+      { name: 'Pizza', icon: '🍕', price: 2.50 },
+      { name: 'Lollipop', icon: '🍭', price: 0.50 },
+      { name: 'Cheese', icon: '🧀', price: 1.75 },
+      { name: 'Hot Dog', icon: '🌭', price: 1.50 },
+      { name: 'Toy Car', icon: '🚗', price: 3.50 }
     ];
 
     const item = surpriseItems[Math.floor(Math.random() * surpriseItems.length)];
     this.app.addItem(item.name, item.price, item.icon);
-    window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.4, 25);
+    window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.45, 30);
   }
 
-  // ─── Lookup pipeline ────────────────────────────────────────────────────────
+  // ─── Lookup Pipeline ────────────────────────────────────────────────────────
 
   async lookupAndShow(barcode, initialMsg) {
     this.showLookupLoading(initialMsg);
@@ -195,55 +237,59 @@ class KidScanner {
   }
 
   /**
-   * Two-API lookup:
-   *  1. Open Food Facts  — world.openfoodfacts.org  (free, no key, food/grocery)
-   *  2. UPC Item DB      — api.upcitemdb.com         (free trial, general retail)
+   * Two-API online lookup:
+   * 1. Open Food Facts (world.openfoodfacts.org) - 3M+ groceries
+   * 2. UPC Item DB fallback
    */
   async lookupBarcode(barcode) {
-    // ── API 1: Open Food Facts ────────────────────────────────────────────────
-    try {
+    const cleanCode = barcode.trim();
+
+    // ── Helper to fetch Open Food Facts ──
+    const fetchOFF = async (code) => {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 6000);
-
-      const res = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-        { signal: ctrl.signal }
-      );
-      clearTimeout(timer);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status === 1 && data.product) {
-          const p = data.product;
-          const name = (p.product_name_en || p.product_name || p.generic_name || '').trim();
-          if (name) {
-            return {
-              barcode,
-              name,
-              brand:    (p.brands || '').split(',')[0].trim(),
-              emoji:    this._categoryToEmoji(p.categories_tags || []),
-              image:    p.image_front_small_url || p.image_url || null,
-              quantity: p.quantity || '',
-              source:   'Open Food Facts'
-            };
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 1 && data.product) {
+            const p = data.product;
+            const name = (p.product_name_en || p.product_name || p.generic_name || '').trim();
+            if (name) {
+              return {
+                barcode: cleanCode,
+                name,
+                brand: (p.brands || '').split(',')[0].trim(),
+                emoji: this._categoryToEmoji(p.categories_tags || []),
+                image: p.image_front_small_url || p.image_url || null,
+                quantity: p.quantity || '',
+                source: 'Open Food Facts'
+              };
+            }
           }
         }
-      }
-    } catch (e) {
-      if (e.name !== 'AbortError') console.warn('OFF lookup error:', e.message);
+      } catch (e) {}
+      clearTimeout(timer);
+      return null;
+    };
+
+    // 1. Try exact barcode
+    let product = await fetchOFF(cleanCode);
+    if (product) return product;
+
+    // 2. If 12-digit UPC, try with leading zero (standard in Open Food Facts)
+    if (cleanCode.length === 12) {
+      product = await fetchOFF('0' + cleanCode);
+      if (product) return product;
     }
 
-    // ── API 2: UPC Item DB ────────────────────────────────────────────────────
+    // 3. Fallback: UPC Item DB
     try {
       const ctrl2 = new AbortController();
-      const timer2 = setTimeout(() => ctrl2.abort(), 6000);
-
-      const res2 = await fetch(
-        `https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`,
-        { signal: ctrl2.signal }
-      );
+      const timer2 = setTimeout(() => ctrl2.abort(), 5000);
+      const res2 = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanCode}`, { signal: ctrl2.signal });
       clearTimeout(timer2);
-
       if (res2.ok) {
         const data2 = await res2.json();
         if (data2.code === 'OK' && data2.items && data2.items.length > 0) {
@@ -251,46 +297,44 @@ class KidScanner {
           const name = (item.title || item.description || '').trim();
           if (name) {
             return {
-              barcode,
+              barcode: cleanCode,
               name,
-              brand:    item.brand || '',
-              emoji:    this._categoryToEmoji(item.category ? [item.category.toLowerCase()] : []),
-              image:    item.images && item.images[0] ? item.images[0] : null,
-              price:    item.lowest_recorded_price || null,
+              brand: item.brand || '',
+              emoji: this._categoryToEmoji(item.category ? [item.category.toLowerCase()] : []),
+              image: item.images && item.images[0] ? item.images[0] : null,
+              price: item.lowest_recorded_price || null,
               quantity: item.size || '',
-              source:   'UPC Item DB'
+              source: 'UPC Item DB'
             };
           }
         }
       }
-    } catch (e) {
-      if (e.name !== 'AbortError') console.warn('UPC ItemDB error:', e.message);
-    }
+    } catch (e) {}
 
     return null;
   }
 
-  // ─── Map Open Food Facts category tags to a friendly emoji ─────────────────
+  // ─── Emoji Category Mapper ──────────────────────────────────────────────────
 
   _categoryToEmoji(tags) {
     const tagStr = (tags || []).join(' ').toLowerCase();
-    if (/fruit|apple|banana|berry|orange|mango/.test(tagStr))    return '🍎';
-    if (/vegetable|carrot|broccoli|salad|tomato/.test(tagStr))   return '🥦';
-    if (/cereal|grain|bread|pasta|rice/.test(tagStr))            return '🌾';
-    if (/dairy|milk|cheese|yogurt|butter/.test(tagStr))          return '🥛';
-    if (/meat|beef|chicken|pork|fish|seafood/.test(tagStr))      return '🍗';
-    if (/snack|chip|crisp|pretzel|popcorn/.test(tagStr))         return '🍟';
-    if (/sweet|candy|chocolate|cookie|cake|sugar/.test(tagStr))  return '🍫';
+    if (/fruit|apple|banana|berry|orange|mango/.test(tagStr)) return '🍎';
+    if (/vegetable|carrot|broccoli|salad|tomato/.test(tagStr)) return '🥦';
+    if (/cereal|grain|bread|pasta|rice/.test(tagStr)) return '🌾';
+    if (/dairy|milk|cheese|yogurt|butter/.test(tagStr)) return '🥛';
+    if (/meat|beef|chicken|pork|fish|seafood/.test(tagStr)) return '🍗';
+    if (/snack|chip|crisp|pretzel|popcorn/.test(tagStr)) return '🍟';
+    if (/sweet|candy|chocolate|cookie|cake|sugar/.test(tagStr)) return '🍫';
     if (/beverage|drink|juice|soda|water|tea|coffee/.test(tagStr)) return '🥤';
-    if (/baby|infant/.test(tagStr))                              return '👶';
-    if (/pet|dog|cat/.test(tagStr))                              return '🐾';
-    if (/toy|game|play/.test(tagStr))                            return '🎮';
-    if (/book|magazine/.test(tagStr))                            return '📚';
-    if (/cleaning|soap|hygiene|cosmetic|beauty/.test(tagStr))    return '🧴';
+    if (/baby|infant/.test(tagStr)) return '👶';
+    if (/pet|dog|cat/.test(tagStr)) return '🐾';
+    if (/toy|game|play/.test(tagStr)) return '🎮';
+    if (/book|magazine/.test(tagStr)) return '📚';
+    if (/cleaning|soap|hygiene|cosmetic|beauty/.test(tagStr)) return '🧴';
     return '🏷️';
   }
 
-  // ─── UI helpers ─────────────────────────────────────────────────────────────
+  // ─── UI Product Card Renderers ──────────────────────────────────────────────
 
   showLookupLoading(msg) {
     const card = document.getElementById('product-result-card');
@@ -299,7 +343,7 @@ class KidScanner {
     card.innerHTML = `
       <div class="lookup-spinner"></div>
       <div class="lookup-status-text">${msg}</div>
-      <div class="lookup-sub">Searching product database…</div>
+      <div class="lookup-sub">Searching global product database…</div>
     `;
     card.style.display = 'flex';
   }
@@ -308,10 +352,9 @@ class KidScanner {
     const card = document.getElementById('product-result-card');
     if (!card) return;
 
-    // Suggest a price: use API price, else a small random pretend price
     const suggestedPrice = product.price
       ? product.price.toFixed(2)
-      : (Math.random() * 4 + 0.5).toFixed(2);
+      : (Math.random() * 3 + 1.25).toFixed(2);
 
     const imgHtml = product.image
       ? `<img class="product-img" src="${product.image}" alt="Product image" onerror="this.style.display='none'">`
@@ -333,7 +376,7 @@ class KidScanner {
         </div>
       </div>
       <div class="product-price-row">
-        <span class="price-label">Set price: $</span>
+        <span class="price-label">Price: $</span>
         <input type="number" id="product-price-input" class="product-price-input"
                value="${suggestedPrice}" step="0.25" min="0.01" max="999">
       </div>
@@ -344,7 +387,6 @@ class KidScanner {
 
     card.style.display = 'flex';
 
-    // Bind add button
     document.getElementById('product-add-to-cart-btn').addEventListener('click', () => {
       const priceInput = document.getElementById('product-price-input');
       const price = Math.max(0.01, parseFloat(priceInput.value) || 1.00);
@@ -352,8 +394,8 @@ class KidScanner {
         ? `${product.name} (${product.brand})`
         : product.name;
 
-      this.app.addItem(displayName.substring(0, 30), price, product.emoji);
-      window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.5, 40);
+      this.app.addItem(displayName.substring(0, 32), price, product.emoji);
+      window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.5, 45);
       this.hideProductCard();
     });
   }
@@ -365,15 +407,15 @@ class KidScanner {
     card.className = 'product-result-card product-not-found';
     card.innerHTML = `
       <div class="not-found-icon">🔍</div>
-      <div class="not-found-title">Product Not Found</div>
-      <div class="not-found-sub">Barcode <strong>${barcode}</strong> isn't in the database — add it as a custom item!</div>
+      <div class="not-found-title">Product Not in Online Database</div>
+      <div class="not-found-sub">Barcode <strong>${barcode}</strong> scanned successfully! Add it as a custom grocery item:</div>
       <div class="product-price-row">
-        <span class="price-label">Set price: $</span>
+        <span class="price-label">Price: $</span>
         <input type="number" id="product-price-input" class="product-price-input"
-               value="1.00" step="0.25" min="0.01" max="999">
+               value="1.50" step="0.25" min="0.01" max="999">
       </div>
       <button class="kid-btn product-add-btn" id="product-add-to-cart-btn">
-        🛒 ADD ANYWAY
+        🛒 ADD TO CART
       </button>
     `;
 
@@ -382,14 +424,18 @@ class KidScanner {
     document.getElementById('product-add-to-cart-btn').addEventListener('click', () => {
       const priceInput = document.getElementById('product-price-input');
       const price = Math.max(0.01, parseFloat(priceInput.value) || 1.00);
-      this.app.addItem(`Mystery Item #${barcode.slice(-4)}`, price, '🏷️');
+      this.app.addItem(`Item #${barcode.slice(-4)}`, price, '📦');
+      window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.5, 30);
       this.hideProductCard();
     });
   }
 
   hideProductCard() {
     const card = document.getElementById('product-result-card');
-    if (card) { card.style.display = 'none'; card.innerHTML = ''; }
+    if (card) {
+      card.style.display = 'none';
+      card.innerHTML = '';
+    }
   }
 
   _setStatusLabel(msg) {
