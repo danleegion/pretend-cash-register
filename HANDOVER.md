@@ -50,7 +50,13 @@ pretend-cash-register/
 | Product found card: image, name, brand, editable price, ADD TO CART | ✅ Done |
 | Product not found fallback with custom add | ✅ Done |
 | Pretend BEEP! scan button (adds random item, no lookup) | ✅ Done |
-| Manual price keypad | ✅ Done |
+| **Keypad** – Full-screen 4x4 matrix, massive chunky buttons | ✅ Done |
+| Large 3-row ENTER key (`✅ ADD ITEM`) | ✅ Done |
+| Double Zero `00` quick-entry key | ✅ Done |
+| PWA icons generated (192px and 512px) | ✅ Done |
+| Voice synthesis removed per user request (pure sound effects) | ✅ Done |
+| Multi-layered mechanical cash register KA-CHING sound | ✅ Done |
+| Real barcode online product lookup (Open Food Facts + UPC Item DB) | ✅ Done |
 | **Web Audio API** — zero deps, offline sounds | ✅ Done |
 | KA-CHING bell + drawer spring + coin jingle | ✅ Done |
 | Credit card 4-beep contactless sequence | ✅ Done |
