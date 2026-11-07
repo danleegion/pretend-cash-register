@@ -1,7 +1,11 @@
 /**
  * Web Audio API Sound Engine for Kids Cash Register
  * Zero external dependencies, 100% offline & instant playback.
- * Voice/speech synthesis removed — pure sound effects only.
+ * 
+ * Bulletproof mobile audio:
+ * - Persistent silent-buffer unlock on user gesture
+ * - Safe async resume handling (no dropped sounds when iOS suspends context)
+ * - Auto-wakes on page visibility and camera close
  */
 
 class SoundEngine {
@@ -13,6 +17,9 @@ class SoundEngine {
     this.sfxEnabled = true;
     this.musicGain = null;
     this.sfxGain = null;
+    this.unlocked = false;
+
+    this.bindUnlockEvents();
   }
 
   init() {
@@ -21,17 +28,63 @@ class SoundEngine {
       if (AudioCtx) {
         this.ctx = new AudioCtx();
         this.sfxGain = this.ctx.createGain();
-        this.sfxGain.gain.value = 0.8;
+        this.sfxGain.gain.value = 0.85;
         this.sfxGain.connect(this.ctx.destination);
 
         this.musicGain = this.ctx.createGain();
-        this.musicGain.gain.value = 0.18; // gentle background volume
+        this.musicGain.gain.value = 0.18;
         this.musicGain.connect(this.ctx.destination);
       }
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+  }
+
+  // Force unlock iOS Safari Web Audio with a silent buffer
+  unlock() {
+    this.init();
+    if (!this.ctx) return;
+
+    if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+      this.ctx.resume().catch(() => {});
     }
+
+    if (!this.unlocked) {
+      try {
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+        this.unlocked = true;
+      } catch (e) {}
+    }
+  }
+
+  // Ensure context is awake before playing sound
+  async ensureReady() {
+    this.init();
+    if (!this.ctx) return false;
+    if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+      try {
+        await this.ctx.resume();
+      } catch (e) {}
+    }
+    return this.ctx.state === 'running';
+  }
+
+  bindUnlockEvents() {
+    const unlockHandler = () => {
+      this.unlock();
+    };
+
+    ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+      document.addEventListener(evt, unlockHandler, { passive: true });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.unlock();
+      }
+    });
   }
 
   // --- Haptic Feedback Helper ---
@@ -46,9 +99,9 @@ class SoundEngine {
   // --- Sound Effects ---
 
   // Standard tactile button blip
-  playKeypadClick(frequency = 520) {
+  async playKeypadClick(frequency = 520) {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate(15);
 
@@ -71,9 +124,9 @@ class SoundEngine {
   }
 
   // Supermarket Barcode Scanner Beep
-  playScannerBeep() {
+  async playScannerBeep() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate([40, 20, 40]);
 
@@ -83,7 +136,7 @@ class SoundEngine {
     const gain = this.ctx.createGain();
 
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(2450, now); // Classic high supermarket scanner pitch
+    osc1.frequency.setValueAtTime(2450, now);
 
     osc2.type = 'triangle';
     osc2.frequency.setValueAtTime(1225, now);
@@ -103,15 +156,13 @@ class SoundEngine {
   }
 
   // Realistic Card Reader Contactless Beep Sequence (RFID Tap)
-  // Real POS machines make 4 rapid high chirps or one distinct contactless double-beep
   async playCardTapSequence(onLedUpdate = null) {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
 
     this.vibrate([50, 40, 50, 40, 80]);
 
-    // 4 LED progressive contactless chimes: pip-pip-pip-BEEP!
     const pitches = [1480, 1480, 1480, 1960];
     const delays = [0, 90, 180, 270];
 
@@ -143,9 +194,9 @@ class SoundEngine {
   }
 
   // Card Approved / Payment Success Fanfare (Happy Ding-Dong-Ding!)
-  playApprovedChime() {
+  async playApprovedChime() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate([60, 50, 100]);
 
@@ -178,41 +229,42 @@ class SoundEngine {
     });
   }
 
-  // Cash Register KA-CHING! — proper layered mechanical bell sound
-  playKaChing() {
+  // Cash Register KA-CHING! — layered mechanical bell sound
+  async playKaChing() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate([80, 30, 120]);
 
     const now = this.ctx.currentTime;
 
-    // ── Layer 1: Sharp mechanical THUNK (drawer latch snap) ──────────────
-    // Filtered noise burst for the mechanical click
-    const bufferSize = this.ctx.sampleRate * 0.06;
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) noiseData[i] = Math.random() * 2 - 1;
+    // ── Layer 1: Mechanical snap/thunk ──
+    try {
+      const bufferSize = Math.max(256, Math.floor(this.ctx.sampleRate * 0.06));
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) noiseData[i] = Math.random() * 2 - 1;
 
-    const noiseSource = this.ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
+      const noiseSource = this.ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
 
-    const noiseFilter = this.ctx.createBiquadFilter();
-    noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.value = 320;
-    noiseFilter.Q.value = 0.8;
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 320;
+      noiseFilter.Q.value = 0.8;
 
-    const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.9, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.9, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
 
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(this.sfxGain);
-    noiseSource.start(now);
-    noiseSource.stop(now + 0.06);
+      noiseSource.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain);
+      noiseSource.start(now);
+      noiseSource.stop(now + 0.06);
+    } catch (e) {}
 
-    // ── Layer 2: "KA" transient impact tone (low body thud) ──────────────
+    // ── Layer 2: "KA" transient impact tone (low body thud) ──
     const thud = this.ctx.createOscillator();
     const thudGain = this.ctx.createGain();
     thud.type = 'sine';
@@ -225,14 +277,12 @@ class SoundEngine {
     thud.start(now);
     thud.stop(now + 0.08);
 
-    // ── Layer 3: Classic cash register CHING bell ─────────────────────────
-    // Real cash register bells are around 1500–2000 Hz with many harmonics
-    // that ring for ~1.5 seconds with slow exponential decay
+    // ── Layer 3: Classic cash register CHING bell ──
     const bellFreqs = [
-      { f: 1760, vol: 0.65, decay: 1.6 },   // main fundamental (A6)
-      { f: 2960, vol: 0.40, decay: 1.2 },   // bright 2nd partial
-      { f: 4320, vol: 0.22, decay: 0.9 },   // shimmer 3rd partial
-      { f: 5500, vol: 0.10, decay: 0.5 },   // sparkle overtone
+      { f: 1760, vol: 0.65, decay: 1.6 },
+      { f: 2960, vol: 0.40, decay: 1.2 },
+      { f: 4320, vol: 0.22, decay: 0.9 },
+      { f: 5500, vol: 0.10, decay: 0.5 },
     ];
 
     setTimeout(() => {
@@ -244,12 +294,10 @@ class SoundEngine {
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(f, t);
-        // Very slight pitch drop simulates real struck metal
         osc.frequency.exponentialRampToValueAtTime(f * 0.994, t + decay);
 
-        // Sharp attack + long resonant tail — the key to a real bell
         gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(vol, t + 0.004); // 4ms attack
+        gain.gain.linearRampToValueAtTime(vol, t + 0.004);
         gain.gain.exponentialRampToValueAtTime(0.001, t + decay);
 
         osc.connect(gain);
@@ -257,18 +305,18 @@ class SoundEngine {
         osc.start(t);
         osc.stop(t + decay + 0.05);
       });
-    }, 55); // Bell hits just after the thunk
+    }, 55);
 
-    // ── Layer 4: Coin jingle (drawer contents rattle) ─────────────────────
+    // ── Layer 4: Coin jingle ──
     setTimeout(() => {
       this.playCoinJingle();
     }, 160);
   }
 
   // Realistic Coin Drop & Clatter
-  playCoinDrop() {
+  async playCoinDrop() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate(25);
 
@@ -292,6 +340,7 @@ class SoundEngine {
   }
 
   playCoinJingle() {
+    if (!this.ctx) return;
     const tones = [2400, 3100, 2800, 3600, 4200];
     tones.forEach((freq, i) => {
       setTimeout(() => {
@@ -311,10 +360,10 @@ class SoundEngine {
     });
   }
 
-  // Paper Receipt Printer Sound (Chirping stepper motor)
-  playPrinterMotor() {
+  // Paper Receipt Printer Sound
+  async playPrinterMotor() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
 
     for (let i = 0; i < 5; i++) {
@@ -335,10 +384,10 @@ class SoundEngine {
     }
   }
 
-  // Trash / Clear Cart Whoosh Sound
-  playClearSound() {
+  // Clear Cart Swoosh Sound
+  async playClearSound() {
     if (!this.sfxEnabled) return;
-    this.init();
+    await this.ensureReady();
     if (!this.ctx) return;
     this.vibrate(30);
 
@@ -356,10 +405,9 @@ class SoundEngine {
     osc.stop(now + 0.18);
   }
 
-  // --- Real-time Synthesized Cheerful Background Music Loop ---
-  // Gentle, charming music box / toy marimba melody that never gets grating
-  toggleMusic() {
-    this.init();
+  // Background Music Loop
+  async toggleMusic() {
+    await this.ensureReady();
     if (this.musicPlaying) {
       this.stopMusic();
       return false;
@@ -369,31 +417,30 @@ class SoundEngine {
     }
   }
 
-  startMusic() {
+  async startMusic() {
     if (this.musicPlaying) return;
-    this.init();
+    await this.ensureReady();
     this.musicPlaying = true;
     this.musicStep = 0;
 
-    // Upbeat pentatonic playful tune (C major pentatonic: C, D, E, G, A)
     const melody = [
-      { note: 523.25, dur: 0.2 }, // C5
-      { note: 659.25, dur: 0.2 }, // E5
-      { note: 783.99, dur: 0.2 }, // G5
-      { note: 880.00, dur: 0.35 },// A5
-      { note: 783.99, dur: 0.2 }, // G5
-      { note: 659.25, dur: 0.2 }, // E5
-      { note: 587.33, dur: 0.35 },// D5
-      { note: 523.25, dur: 0.4 }, // C5
+      { note: 523.25, dur: 0.2 },
+      { note: 659.25, dur: 0.2 },
+      { note: 783.99, dur: 0.2 },
+      { note: 880.00, dur: 0.35 },
+      { note: 783.99, dur: 0.2 },
+      { note: 659.25, dur: 0.2 },
+      { note: 587.33, dur: 0.35 },
+      { note: 523.25, dur: 0.4 },
 
-      { note: 659.25, dur: 0.2 }, // E5
-      { note: 783.99, dur: 0.2 }, // G5
-      { note: 880.00, dur: 0.2 }, // A5
-      { note: 1046.50, dur: 0.35 },// C6
-      { note: 880.00, dur: 0.2 }, // A5
-      { note: 783.99, dur: 0.2 }, // G5
-      { note: 659.25, dur: 0.35 },// E5
-      { note: 587.33, dur: 0.4 }  // D5
+      { note: 659.25, dur: 0.2 },
+      { note: 783.99, dur: 0.2 },
+      { note: 880.00, dur: 0.2 },
+      { note: 1046.50, dur: 0.35 },
+      { note: 880.00, dur: 0.2 },
+      { note: 783.99, dur: 0.2 },
+      { note: 659.25, dur: 0.35 },
+      { note: 587.33, dur: 0.4 }
     ];
 
     const bass = [
@@ -401,17 +448,15 @@ class SoundEngine {
       392.00, 392.00, 329.63, 261.63
     ];
 
-    const stepDuration = 260; // ms per step
+    const stepDuration = 260;
 
     this.musicTimer = setInterval(() => {
       if (!this.musicPlaying || !this.ctx) return;
       const step = this.musicStep % melody.length;
       const item = melody[step];
 
-      // Play melody note (bell-like marimba)
       this.playSynthNote(item.note, item.dur, 'sine', 0.22);
 
-      // Play gentle bass note on every other beat
       if (step % 2 === 0) {
         const bassFreq = bass[(step / 2) % bass.length];
         this.playSynthNote(bassFreq / 2, 0.35, 'triangle', 0.15);

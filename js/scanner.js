@@ -141,6 +141,11 @@ class KidScanner {
         this.videoElement.srcObject = null;
       } catch (e) {}
     }
+
+    // Wake Web Audio context back up after camera session ends
+    if (window.soundEngine) {
+      window.soundEngine.unlock();
+    }
   }
 
   _showFallback(fallbackBox, statusEl, msg) {
