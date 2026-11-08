@@ -71,28 +71,28 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-purple) 100%);
-  padding: 10px 14px;
-  padding-top: calc(10px + env(safe-area-inset-top));
-  border-bottom: 4px solid #fff;
+  padding: 5px 10px;
+  padding-top: calc(5px + env(safe-area-inset-top));
+  border-bottom: 3px solid #fff;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(199,125,255,0.4);
+  box-shadow: 0 3px 12px rgba(199,125,255,0.3);
 }
 
 .brand-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
 }
 
-.brand-icon { font-size: 1.6rem; }
+.brand-icon { font-size: 1.25rem; }
 
 .brand-text {
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.04em;
@@ -102,24 +102,24 @@ body {
 
 .header-controls {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .header-pill-btn {
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: none;
   border-radius: 50px;
   cursor: pointer;
   color: #fff;
   transition: transform 0.1s, box-shadow 0.1s;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.2);
   white-space: nowrap;
-  min-height: 36px;
+  min-height: 28px;
 }
 
 .header-pill-btn:active {
@@ -141,16 +141,16 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 10px 10px 0;
-  gap: 10px;
+  padding: 6px 6px 0;
+  gap: 6px;
 }
 
 .register-screen-box {
   position: relative;
   background: var(--screen-bg);
-  border-radius: var(--radius-xl);
-  border: 5px solid #1a1a1a;
-  box-shadow: var(--shadow-toy), inset 0 0 40px rgba(0,0,0,0.5);
+  border-radius: var(--radius-lg);
+  border: 4px solid #1a1a1a;
+  box-shadow: var(--shadow-toy), inset 0 0 30px rgba(0,0,0,0.5);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -170,12 +170,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 14px 4px;
+  padding: 4px 10px 2px;
   border-bottom: 1px solid #1e4d2b;
 }
 
 .screen-store-badge {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--screen-green);
   letter-spacing: 0.08em;
@@ -183,54 +183,54 @@ body {
 }
 
 .screen-item-count {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #aef;
   font-weight: 600;
 }
 
 .screen-display-row {
-  padding: 6px 14px 2px;
+  padding: 2px 10px 0;
 }
 
 .screen-total-wrap {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
 }
 
 .total-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #6fa;
   font-weight: 600;
   letter-spacing: 0.08em;
 }
 
 .screen-total-val {
-  font-size: 2.4rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--screen-green);
-  text-shadow: 0 0 16px var(--screen-green), 0 0 4px #fff;
+  text-shadow: 0 0 14px var(--screen-green), 0 0 4px #fff;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
 }
 
 .screen-status-msg {
-  padding: 2px 14px 6px;
-  font-size: 0.78rem;
+  padding: 1px 10px 3px;
+  font-size: 0.72rem;
   color: #FFD700;
   font-weight: 600;
-  min-height: 22px;
+  min-height: 18px;
   text-shadow: 0 0 6px rgba(255,215,0,0.5);
 }
 
 /* Cart list inside screen */
 .cart-items-list {
-  max-height: 108px;
+  max-height: 52px;
   overflow-y: auto;
-  padding: 4px 10px 8px;
+  padding: 2px 6px 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   scrollbar-width: thin;
   scrollbar-color: #2a6a3a var(--screen-bg);
 }
@@ -301,7 +301,7 @@ body {
    ========================================================= */
 .mode-tabs-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   background: rgba(255,255,255,0.7);
   border-radius: var(--radius-lg);
   border: 3px solid #fff;
@@ -316,13 +316,13 @@ body {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 8px 4px;
+  padding: 6px 4px;
   border: none;
   background: transparent;
   cursor: pointer;
   transition: background 0.15s;
   font-family: inherit;
-  min-height: 60px;
+  min-height: 52px;
 }
 
 .tab-btn:active { background: rgba(0,0,0,0.08); }
@@ -333,7 +333,7 @@ body {
   box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
 }
 
-.tab-emoji { font-size: 1.4rem; line-height: 1; }
+.tab-emoji { font-size: 1.2rem; line-height: 1; }
 .tab-title {
   font-size: 0.6rem;
   font-weight: 700;
@@ -387,7 +387,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 12px;
   background: rgba(255,255,255,0.65);
   border-radius: var(--radius-md);
   margin-bottom: 2px;
@@ -420,9 +420,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 12px 6px;
-  min-height: 90px;
+  gap: 4px;
+  padding: 10px 6px;
+  min-height: 80px;
   border-radius: var(--radius-lg);
   background: var(--item-color, #48CAE4);
   box-shadow: 0 5px 0 rgba(0,0,0,0.22), var(--shadow-toy);
@@ -437,7 +437,7 @@ body {
   box-shadow: 0 1px 0 rgba(0,0,0,0.22);
 }
 
-.item-btn-icon  { font-size: 2rem; line-height: 1; }
+.item-btn-icon  { font-size: 1.8rem; line-height: 1; }
 .item-btn-name  { font-size: 0.72rem; font-weight: 700; text-align: center; }
 .item-btn-price { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.03em; }
 
@@ -446,17 +446,56 @@ body {
   opacity: 0.85;
 }
 
+/* Item card wrapper + small edit pencil button */
+.item-card-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.item-card-wrapper .item-btn {
+  flex: 1;
+  width: 100%;
+}
+
+.item-edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  transition: transform 0.08s, background 0.1s;
+}
+
+.item-edit-btn:active {
+  transform: scale(0.9);
+  background: rgba(0,0,0,0.55);
+}
+
+.add-new-wrapper .item-edit-btn { display: none; }
+
 /* =========================================================
    TAB 2: CARD TERMINAL (POS Machine)
    ========================================================= */
 .pos-machine-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px 8px;
+  gap: 8px;
+  padding: 8px 8px;
   background: linear-gradient(170deg, #2C3E50 0%, #3D5A80 100%);
   border-radius: var(--radius-xl);
-  margin: 4px 0 6px;
+  margin: 2px 0 4px;
   box-shadow: var(--shadow-toy);
 }
 
@@ -464,11 +503,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 10px;
+  padding: 2px 8px;
 }
 
-.contactless-wave-icon { font-size: 1.8rem; }
-.pos-chip-icon         { font-size: 1.5rem; }
+.contactless-wave-icon { font-size: 1.5rem; }
+.pos-chip-icon         { font-size: 1.2rem; }
 
 .pos-leds-bar {
   display: flex;
@@ -501,7 +540,7 @@ body {
   background: #001a08;
   border-radius: var(--radius-md);
   border: 3px solid #0d3b1e;
-  padding: 10px 16px;
+  padding: 8px 12px;
   text-align: center;
   box-shadow: var(--shadow-inset);
 }
@@ -514,14 +553,14 @@ body {
 }
 
 .pos-screen-amount span {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   color: #39FF14;
   font-weight: 800;
   text-shadow: 0 0 10px #39FF14;
 }
 
 .pos-screen-message {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #FFD700;
   letter-spacing: 0.04em;
@@ -529,19 +568,19 @@ body {
   margin-bottom: 4px;
 }
 
-.pos-screen-icon { font-size: 1.8rem; }
+.pos-screen-icon { font-size: 1.5rem; }
 
 /* Card Tap Zone */
 .card-interaction-zone {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .card-tap-pad {
   width: 100%;
-  min-height: 110px;
+  min-height: 88px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   border: 3px dashed #48CAE4;
@@ -598,14 +637,14 @@ body {
   z-index: 1;
 }
 
-.tap-huge-icon      { font-size: 2.4rem; }
-.tap-prompt-title   { font-size: 0.9rem; font-weight: 800; color: #48CAE4; letter-spacing: 0.04em; text-align: center; }
-.tap-prompt-sub     { font-size: 0.65rem; color: #aaa; text-align: center; }
+.tap-huge-icon      { font-size: 2rem; }
+.tap-prompt-title   { font-size: 0.82rem; font-weight: 800; color: #48CAE4; letter-spacing: 0.04em; text-align: center; }
+.tap-prompt-sub     { font-size: 0.6rem; color: #aaa; text-align: center; }
 
 /* Pretend Credit Card Widget */
 .pretend-card-widget {
-  width: 220px;
-  height: 130px;
+  width: 200px;
+  height: 116px;
   background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
   border-radius: 14px;
   border: 2px solid rgba(255,255,255,0.3);
@@ -614,7 +653,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 14px;
   cursor: pointer;
   animation: cardFloat 3s ease-in-out infinite;
   transition: transform 0.1s;
@@ -689,8 +728,8 @@ body {
 /* Alt Card Actions */
 .pos-alt-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .alt-pos-btn {
@@ -698,8 +737,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
+  gap: 3px;
+  padding: 9px 6px;
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -708,7 +747,7 @@ body {
   color: #fff;
   box-shadow: 0 4px 0 rgba(0,0,0,0.3);
   transition: transform 0.08s, box-shadow 0.08s;
-  min-height: 70px;
+  min-height: 56px;
 }
 
 .alt-pos-btn:active {
@@ -719,8 +758,8 @@ body {
 .chip-slot-btn { background: linear-gradient(135deg, #2ecc71, #27ae60); }
 .swipe-slot-btn{ background: linear-gradient(135deg, #e67e22, #d35400); }
 
-.btn-icon { font-size: 1.6rem; }
-.btn-text { font-size: 0.72rem; letter-spacing: 0.03em; }
+.btn-icon { font-size: 1.4rem; }
+.btn-text { font-size: 0.68rem; letter-spacing: 0.03em; }
 
 /* =========================================================
    TAB 3: CASH REGISTER DRAWER
@@ -946,7 +985,7 @@ body {
    ========================================================= */
 
 #tab-keypad {
-  padding: 8px 4px 6px;
+  padding: 6px 4px 4px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -959,7 +998,7 @@ body {
   flex-direction: column;
   flex: 1;               /* fill the full tab panel height */
   width: 100%;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
 }
 
@@ -967,7 +1006,7 @@ body {
   background: var(--screen-bg);
   border-radius: var(--radius-lg);
   border: 4px solid #1a3a1a;
-  padding: 10px 18px;
+  padding: 8px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -984,7 +1023,7 @@ body {
 }
 
 .keypad-display-val {
-  font-size: 2.2rem;
+  font-size: 1.9rem;
   font-weight: 800;
   color: var(--screen-green);
   text-shadow: 0 0 14px var(--screen-green);
@@ -996,18 +1035,18 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr) 1.35fr;
   grid-template-rows: repeat(4, 1fr);   /* 4 equal rows */
-  gap: 10px;
+  gap: 8px;
   flex: 1;                              /* take all remaining vertical space */
   width: 100%;
-  min-height: 380px;                    /* big, chunky touch targets for kids */
+  min-height: 320px;                    /* big, chunky touch targets for kids */
 }
 
 .keypad-btn {
-  font-size: 1.85rem;
+  font-size: 1.7rem;
   font-weight: 800;
   height: 100%;
   width: 100%;
-  min-height: 72px;
+  min-height: 60px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #ffffff, #ece7ff);
   color: var(--brand-purple);
@@ -1521,6 +1560,52 @@ body {
   transform: translateY(3px);
   box-shadow: 0 1px 0 rgba(0,0,0,0.2);
 }
+
+.modal-danger-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 12px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #FF5964, #d63031);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.modal-danger-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+.modal-cancel-row {
+  display: flex;
+  justify-content: center;
+}
+
+.modal-reset-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.modal-text-link {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #999;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.modal-text-link:active { color: var(--brand-purple); }
 
 /* =========================================================
    LASER FLASH EFFECT (Full-screen)

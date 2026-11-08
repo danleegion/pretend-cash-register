@@ -1,5 +1,7 @@
 /**
  * Kids Pretend Cash Register Main Application Logic
+ * Supports persistent items in localStorage, editing & deleting items,
+ * Card machine payments, and responsive mobile-first UI.
  */
 
 class CashRegisterApp {
@@ -7,11 +9,10 @@ class CashRegisterApp {
     this.cart = [];
     this.total = 0;
     this.currentInput = '';
-    this.activeTab = 'items'; // 'items', 'card', 'cash', 'keypad'
+    this.activeTab = 'items'; // 'items', 'card', 'keypad'
     this.scanner = null;
-    this.customItems = [];
 
-    // Preloaded fun kid items
+    // Standard preloaded fun kid items
     this.defaultItems = [
       { id: 'apple', name: 'Apple', icon: '🍎', price: 1.00, color: '#FF5964' },
       { id: 'banana', name: 'Banana', icon: '🍌', price: 0.50, color: '#FFE066' },
@@ -27,7 +28,7 @@ class CashRegisterApp {
       { id: 'lollipop', name: 'Lollipop', icon: '🍭', price: 0.50, color: '#A78BFA' }
     ];
 
-    this.cashTendered = 0;
+    this.items = this.loadSavedItems();
     this.isProcessingCard = false;
     this.init();
   }
@@ -39,10 +40,44 @@ class CashRegisterApp {
     this.updateDisplay();
     this.switchTab('items');
 
-    // Welcome voice announcement on first interaction
     document.addEventListener('pointerdown', () => {
       window.soundEngine.init();
     }, { once: true });
+  }
+
+  // --- LocalStorage Items Persistence ---
+
+  loadSavedItems() {
+    try {
+      const saved = localStorage.getItem('kids_register_items_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load items from localStorage', e);
+    }
+    return JSON.parse(JSON.stringify(this.defaultItems));
+  }
+
+  saveItems() {
+    try {
+      localStorage.setItem('kids_register_items_v2', JSON.stringify(this.items));
+    } catch (e) {
+      console.warn('Could not save items to localStorage', e);
+    }
+  }
+
+  resetDefaultItems() {
+    this.items = JSON.parse(JSON.stringify(this.defaultItems));
+    this.saveItems();
+    this.renderQuickItems();
+    this.closeCustomItemDialog();
+    this.closeEditItemDialog();
+    window.soundEngine.playKeypadClick(600);
+    this.updateDisplay('Restored original 12 items! ⭐');
   }
 
   // --- Cart Management ---
@@ -65,13 +100,10 @@ class CashRegisterApp {
     this.calculateTotal();
     this.updateDisplay(`Added ${name}!`);
 
-    // Cute voice speech
-
-    // Bouncy animation on total badge
     const totalEl = document.getElementById('screen-total');
     if (totalEl) {
       totalEl.classList.remove('bounce-pop');
-      void totalEl.offsetWidth; // trigger reflow
+      void totalEl.offsetWidth;
       totalEl.classList.add('bounce-pop');
     }
   }
@@ -88,10 +120,8 @@ class CashRegisterApp {
     this.cart = [];
     this.total = 0;
     this.currentInput = '';
-    this.cashTendered = 0;
     this.updateDisplay('Ready for next customer! 🛒');
     this.hideReceipt();
-    this.closeCashDrawer();
     this.resetCardReader();
   }
 
@@ -123,11 +153,10 @@ class CashRegisterApp {
       } else if (this.cart.length === 0) {
         msgEl.textContent = 'Welcome! Tap items or scan to start 🍎';
       } else {
-        msgEl.textContent = `Total is ${this.formatCurrency(this.total)}. Pay with Card or Cash! 💳💵`;
+        msgEl.textContent = `Total is ${this.formatCurrency(this.total)}. Pay with Card! 💳`;
       }
     }
 
-    // Render Mini Cart List inside screen
     if (cartListEl) {
       if (this.cart.length === 0) {
         cartListEl.innerHTML = '<div class="empty-cart-msg">Your cart is empty! Press any item button below ⬇️</div>';
@@ -141,10 +170,8 @@ class CashRegisterApp {
           </div>
         `).join('');
 
-        // Scroll to bottom of cart list
         cartListEl.scrollTop = cartListEl.scrollHeight;
 
-        // Bind delete buttons
         cartListEl.querySelectorAll('.item-delete-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -155,36 +182,36 @@ class CashRegisterApp {
       }
     }
 
-    // Update Pay button totals
     const cardPayAmount = document.getElementById('card-reader-amount');
     if (cardPayAmount) cardPayAmount.textContent = this.formatCurrency(this.total);
-
-    const cashDueAmount = document.getElementById('cash-due-amount');
-    if (cashDueAmount) cashDueAmount.textContent = this.formatCurrency(this.total);
   }
 
-  // --- Render Item Grid ---
+  // --- Render Item Grid with Edit Buttons ---
 
   renderQuickItems() {
     const grid = document.getElementById('quick-items-grid');
     if (!grid) return;
 
-    const allItems = [...this.defaultItems, ...this.customItems];
-    grid.innerHTML = allItems.map(item => `
-      <button class="kid-btn item-btn" style="--item-color: ${item.color || '#48CAE4'}" data-name="${item.name}" data-price="${item.price}" data-icon="${item.icon}">
-        <span class="item-btn-icon">${item.icon}</span>
-        <span class="item-btn-name">${item.name}</span>
-        <span class="item-btn-price">${this.formatCurrency(item.price)}</span>
-      </button>
+    grid.innerHTML = this.items.map(item => `
+      <div class="item-card-wrapper" style="--item-color: ${item.color || '#48CAE4'}">
+        <button class="kid-btn item-btn" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}" data-icon="${item.icon}">
+          <span class="item-btn-icon">${item.icon}</span>
+          <span class="item-btn-name">${item.name}</span>
+          <span class="item-btn-price">${this.formatCurrency(item.price)}</span>
+        </button>
+        <button class="item-edit-btn" data-id="${item.id}" aria-label="Edit ${item.name}" title="Edit Item">✏️</button>
+      </div>
     `).join('') + `
-      <button class="kid-btn item-btn add-custom-item-btn" id="open-custom-item-btn" style="--item-color: #A0C4FF">
-        <span class="item-btn-icon">➕</span>
-        <span class="item-btn-name">Add New</span>
-        <span class="item-btn-price">Custom</span>
-      </button>
+      <div class="item-card-wrapper add-new-wrapper">
+        <button class="kid-btn item-btn add-custom-item-btn" id="open-custom-item-btn" style="--item-color: #A0C4FF">
+          <span class="item-btn-icon">➕</span>
+          <span class="item-btn-name">Add New</span>
+          <span class="item-btn-price">Custom</span>
+        </button>
+      </div>
     `;
 
-    // Bind item click
+    // Item click -> add to cart
     grid.querySelectorAll('.item-btn:not(.add-custom-item-btn)').forEach(btn => {
       btn.addEventListener('click', () => {
         const name = btn.dataset.name;
@@ -194,10 +221,115 @@ class CashRegisterApp {
       });
     });
 
+    // Small edit button click -> open edit dialog
+    grid.querySelectorAll('.item-edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        this.openEditItemDialog(id);
+      });
+    });
+
     const addBtn = document.getElementById('open-custom-item-btn');
     if (addBtn) {
       addBtn.addEventListener('click', () => this.openCustomItemDialog());
     }
+  }
+
+  // --- Edit & Delete Item Modal ---
+
+  openEditItemDialog(id) {
+    const item = this.items.find(i => String(i.id) === String(id));
+    if (!item) return;
+
+    const modal = document.getElementById('edit-item-modal');
+    if (!modal) return;
+
+    document.getElementById('edit-item-id').value = item.id;
+    document.getElementById('edit-item-name').value = item.name;
+    document.getElementById('edit-item-price').value = item.price.toFixed(2);
+    document.getElementById('edit-item-emoji').value = item.icon || '🎁';
+
+    modal.classList.add('visible');
+    window.soundEngine.playKeypadClick(480);
+  }
+
+  closeEditItemDialog() {
+    const modal = document.getElementById('edit-item-modal');
+    if (modal) modal.classList.remove('visible');
+  }
+
+  saveEditedItem() {
+    const id = document.getElementById('edit-item-id').value;
+    const nameInput = document.getElementById('edit-item-name');
+    const priceInput = document.getElementById('edit-item-price');
+    const emojiInput = document.getElementById('edit-item-emoji');
+
+    const item = this.items.find(i => String(i.id) === String(id));
+    if (!item) return;
+
+    item.name = nameInput.value.trim() || item.name;
+    item.price = Math.max(0.01, parseFloat(priceInput.value) || 1.00);
+    item.icon = emojiInput.value.trim() || item.icon;
+
+    this.saveItems();
+    this.renderQuickItems();
+    this.closeEditItemDialog();
+    window.soundEngine.playApprovedChime();
+    this.updateDisplay(`Updated ${item.name}! ⭐`);
+  }
+
+  deleteItem(id) {
+    const item = this.items.find(i => String(i.id) === String(id));
+    const itemName = item ? item.name : 'Item';
+
+    this.items = this.items.filter(i => String(i.id) !== String(id));
+    this.saveItems();
+    this.renderQuickItems();
+    this.closeEditItemDialog();
+    window.soundEngine.playClearSound();
+    this.updateDisplay(`Deleted ${itemName} 🗑️`);
+  }
+
+  // --- Add Custom Item Modal ---
+
+  openCustomItemDialog() {
+    const modal = document.getElementById('custom-item-modal');
+    if (modal) modal.classList.add('visible');
+    window.soundEngine.playKeypadClick(480);
+  }
+
+  closeCustomItemDialog() {
+    const modal = document.getElementById('custom-item-modal');
+    if (modal) modal.classList.remove('visible');
+  }
+
+  saveCustomItem() {
+    const nameInput = document.getElementById('custom-item-name');
+    const priceInput = document.getElementById('custom-item-price');
+    const emojiInput = document.getElementById('custom-item-emoji');
+
+    const name = nameInput.value.trim() || 'My Toy';
+    const price = Math.max(0.01, parseFloat(priceInput.value) || 1.00);
+    const icon = emojiInput.value.trim() || '🎁';
+
+    const newItem = {
+      id: 'custom_' + Date.now(),
+      name,
+      price,
+      icon,
+      color: '#BDB2FF'
+    };
+
+    this.items.push(newItem);
+    this.saveItems();
+    this.renderQuickItems();
+    this.closeCustomItemDialog();
+    window.soundEngine.playApprovedChime();
+    this.addItem(name, price, icon);
+
+    nameInput.value = '';
+    priceInput.value = '';
   }
 
   // --- Keypad Manual Entry ---
@@ -223,7 +355,6 @@ class CashRegisterApp {
         this.currentInput += '00';
       }
     } else {
-      // Numbers
       if (this.currentInput === '0' && key !== '0') {
         this.currentInput = key;
       } else if (this.currentInput.length < 6) {
@@ -255,25 +386,21 @@ class CashRegisterApp {
       document.getElementById('led-4')
     ];
 
-    // Reset LEDs
     leds.forEach(led => led && led.classList.remove('active', 'success'));
 
     if (terminalScreen) terminalScreen.textContent = method === 'TAP' ? 'CARD DETECTED! HOLD STILL...' : 'READING CHIP...';
     if (terminalIcon) terminalIcon.textContent = '📶';
 
-    // Play contactless 4-beep sequence with LED lighting
     window.soundEngine.playCardTapSequence((ledIndex) => {
       const led = leds[ledIndex - 1];
       if (led) led.classList.add(ledIndex === 4 ? 'success' : 'active');
     });
 
-    // POS Machine Processing Sequence
     setTimeout(() => {
       if (terminalScreen) terminalScreen.textContent = 'AUTHORIZING... ⏳';
       if (terminalIcon) terminalIcon.textContent = '🔄';
     }, 450);
 
-    // Approval Chime and Confetti!
     setTimeout(() => {
       if (terminalScreen) terminalScreen.textContent = 'APPROVED! ✔️';
       if (terminalIcon) terminalIcon.textContent = '🎉';
@@ -282,9 +409,7 @@ class CashRegisterApp {
       window.soundEngine.playApprovedChime();
       window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.45, 60);
 
-      // Print Receipt!
       this.printReceipt('CARD (Tap-to-Pay)');
-
       this.isProcessingCard = false;
     }, 1250);
   }
@@ -305,110 +430,9 @@ class CashRegisterApp {
     leds.forEach(led => led && led.classList.remove('active', 'success'));
   }
 
-  // --- Pretend Cash Register Drawer ---
-
-  openCashDrawer() {
-    window.soundEngine.playKaChing();
-    const drawer = document.getElementById('cash-drawer-section');
-    if (drawer) {
-      drawer.classList.add('drawer-open');
-    }
-    this.updateDisplay(`Cash drawer open! Cha-ching! 💵`);
-  }
-
-  closeCashDrawer() {
-    const drawer = document.getElementById('cash-drawer-section');
-    if (drawer) {
-      drawer.classList.remove('drawer-open');
-    }
-  }
-
-  handleCashPayment(amount) {
-    if (this.total <= 0) {
-      this.updateDisplay('Add items to cart first! 🛒');
-      return;
-    }
-
-    if (amount === 'EXACT') {
-      this.cashTendered = this.total;
-    } else {
-      this.cashTendered += parseFloat(amount);
-      if (amount >= 1) {
-        window.soundEngine.playKaChing();
-      } else {
-        window.soundEngine.playCoinDrop();
-      }
-    }
-
-    this.calculateCashChange();
-  }
-
-  calculateCashChange() {
-    const changeDue = this.cashTendered - this.total;
-    const tenderedEl = document.getElementById('cash-tendered-val');
-    const changeEl = document.getElementById('cash-change-val');
-    const changeTipEl = document.getElementById('cash-change-tip');
-
-    if (tenderedEl) tenderedEl.textContent = this.formatCurrency(this.cashTendered);
-
-    if (changeDue >= 0) {
-      if (changeEl) {
-        changeEl.textContent = this.formatCurrency(changeDue);
-        changeEl.classList.add('change-positive');
-      }
-
-      // Kid-friendly change breakdown
-      const tipText = this.getChangeBreakdownText(changeDue);
-      if (changeTipEl) changeTipEl.textContent = tipText;
-
-      window.soundEngine.playApprovedChime();
-      window.confettiFX.burst(window.innerWidth / 2, window.innerHeight * 0.45, 45);
-
-      if (changeDue === 0) {
-      } else {
-      }
-
-      // Print Receipt
-      this.printReceipt(`CASH (Paid: ${this.formatCurrency(this.cashTendered)})`, changeDue);
-    } else {
-      const stillNeed = Math.abs(changeDue);
-      if (changeEl) {
-        changeEl.textContent = `Need ${this.formatCurrency(stillNeed)} more`;
-        changeEl.classList.remove('change-positive');
-      }
-      if (changeTipEl) changeTipEl.textContent = `Put more bills or coins in the drawer! 💰`;
-    }
-  }
-
-  getChangeBreakdownText(change) {
-    if (change <= 0) return 'Exact change! No coins needed ⭐';
-
-    let cents = Math.round(change * 100);
-    const bills20 = Math.floor(cents / 2000); cents %= 2000;
-    const bills10 = Math.floor(cents / 1000); cents %= 1000;
-    const bills5 = Math.floor(cents / 500); cents %= 500;
-    const bills1 = Math.floor(cents / 100); cents %= 100;
-    const quarters = Math.floor(cents / 25); cents %= 25;
-    const dimes = Math.floor(cents / 10); cents %= 10;
-    const nickels = Math.floor(cents / 5); cents %= 5;
-    const pennies = cents;
-
-    const parts = [];
-    if (bills20) parts.push(`${bills20} $20 bill${bills20 > 1 ? 's' : ''}`);
-    if (bills10) parts.push(`${bills10} $10 bill${bills10 > 1 ? 's' : ''}`);
-    if (bills5) parts.push(`${bills5} $5 bill${bills5 > 1 ? 's' : ''}`);
-    if (bills1) parts.push(`${bills1} $1 bill${bills1 > 1 ? 's' : ''}`);
-    if (quarters) parts.push(`${quarters} quarter${quarters > 1 ? 's' : ''}`);
-    if (dimes) parts.push(`${dimes} dime${dimes > 1 ? 's' : ''}`);
-    if (nickels) parts.push(`${nickels} nickel${nickels > 1 ? 's' : ''}`);
-    if (pennies) parts.push(`${pennies} penny${pennies > 1 ? 'ies' : ''}`);
-
-    return 'Give: ' + parts.join(', ');
-  }
-
   // --- Receipt Printer ---
 
-  printReceipt(payMethod, changeDue = 0) {
+  printReceipt(payMethod) {
     window.soundEngine.playPrinterMotor();
     const receiptContainer = document.getElementById('receipt-container');
     const receiptBody = document.getElementById('receipt-body');
@@ -442,11 +466,6 @@ class CashRegisterApp {
         <span>PAID WITH:</span>
         <span>${payMethod}</span>
       </div>
-      ${changeDue > 0 ? `
-      <div class="receipt-row">
-        <span>CHANGE DUE:</span>
-        <span>${this.formatCurrency(changeDue)}</span>
-      </div>` : ''}
       <div class="receipt-divider">--------------------------------</div>
       <div class="receipt-footer">
         <div>THANK YOU FOR SHOPPING! 🛍️</div>
@@ -455,7 +474,6 @@ class CashRegisterApp {
       </div>
     `;
 
-    // Slide out animation
     receiptContainer.classList.remove('receipt-hidden');
     receiptContainer.classList.add('receipt-printing');
   }
@@ -468,46 +486,7 @@ class CashRegisterApp {
     }
   }
 
-  // --- Custom Item Modal ---
-
-  openCustomItemDialog() {
-    const modal = document.getElementById('custom-item-modal');
-    if (modal) modal.classList.add('visible');
-  }
-
-  closeCustomItemDialog() {
-    const modal = document.getElementById('custom-item-modal');
-    if (modal) modal.classList.remove('visible');
-  }
-
-  saveCustomItem() {
-    const nameInput = document.getElementById('custom-item-name');
-    const priceInput = document.getElementById('custom-item-price');
-    const emojiInput = document.getElementById('custom-item-emoji');
-
-    const name = nameInput.value.trim() || 'My Toy';
-    const price = Math.max(0.01, parseFloat(priceInput.value) || 1.00);
-    const icon = emojiInput.value.trim() || '🎁';
-
-    this.customItems.push({
-      id: 'custom_' + Date.now(),
-      name,
-      price,
-      icon,
-      color: '#BDB2FF'
-    });
-
-    this.renderQuickItems();
-    this.closeCustomItemDialog();
-    window.soundEngine.playKeypadClick();
-    this.addItem(name, price, icon);
-
-    // reset fields
-    nameInput.value = '';
-    priceInput.value = '';
-  }
-
-  // --- Bind Event Listeners ---
+  // --- Event Bindings ---
 
   bindEvents() {
     // Mode Switcher Tabs
@@ -518,7 +497,7 @@ class CashRegisterApp {
       });
     });
 
-    // Scanner Gun button on header/dock
+    // Scanner Gun button on header
     const scannerGunBtn = document.getElementById('scanner-gun-btn');
     if (scannerGunBtn) {
       scannerGunBtn.addEventListener('click', () => {
@@ -526,7 +505,6 @@ class CashRegisterApp {
       });
     }
 
-    // Modal close buttons
     const closeScannerBtn = document.getElementById('close-scanner-btn');
     if (closeScannerBtn) {
       closeScannerBtn.addEventListener('click', () => {
@@ -534,7 +512,6 @@ class CashRegisterApp {
       });
     }
 
-    // Scan Barcode Trigger inside modal — pretend "BEEP!" mode
     const triggerScanModalBtn = document.getElementById('trigger-scan-btn');
     if (triggerScanModalBtn) {
       triggerScanModalBtn.addEventListener('click', () => {
@@ -542,7 +519,6 @@ class CashRegisterApp {
       });
     }
 
-    // Manual barcode lookup button
     const barcodeLookupBtn = document.getElementById('barcode-lookup-btn');
     if (barcodeLookupBtn) {
       barcodeLookupBtn.addEventListener('click', () => {
@@ -550,7 +526,6 @@ class CashRegisterApp {
       });
     }
 
-    // Allow pressing Enter in the barcode input field too
     const barcodeInput = document.getElementById('barcode-manual-input');
     if (barcodeInput) {
       barcodeInput.addEventListener('keydown', (e) => {
@@ -561,7 +536,7 @@ class CashRegisterApp {
       });
     }
 
-    // Pretend Card Tap Area (Large touch target)
+    // Card Tap Pad
     const cardTapPad = document.getElementById('card-tap-pad');
     if (cardTapPad) {
       cardTapPad.addEventListener('click', () => {
@@ -585,37 +560,13 @@ class CashRegisterApp {
       });
     }
 
-    // Pretend Card Drag/Hold interaction
+    // Pretend Card Widget
     const draggableCard = document.getElementById('interactive-pretend-card');
     if (draggableCard) {
       draggableCard.addEventListener('click', () => {
         this.triggerCardPayment('TAP');
       });
     }
-
-    // Cash Drawer Open Button
-    const openDrawerBtn = document.getElementById('open-drawer-btn');
-    if (openDrawerBtn) {
-      openDrawerBtn.addEventListener('click', () => {
-        this.openCashDrawer();
-      });
-    }
-
-    // Cash Tender Buttons ($1, $5, $10, $20, Exact)
-    document.querySelectorAll('.quick-cash-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const amount = btn.dataset.cash;
-        this.handleCashPayment(amount);
-      });
-    });
-
-    // Drawer Money items click (Bills & Coins in tray)
-    document.querySelectorAll('.drawer-money-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const amount = parseFloat(btn.dataset.val);
-        this.handleCashPayment(amount);
-      });
-    });
 
     // Keypad Buttons
     document.querySelectorAll('.keypad-btn').forEach(btn => {
@@ -643,7 +594,7 @@ class CashRegisterApp {
       });
     }
 
-    // Audio / Voice / Music Toggles
+    // Audio SFX Toggle
     const sfxToggle = document.getElementById('sfx-toggle-btn');
     if (sfxToggle) {
       sfxToggle.addEventListener('click', () => {
@@ -653,17 +604,23 @@ class CashRegisterApp {
       });
     }
 
+    // Music Toggle (random tracks)
     const musicToggle = document.getElementById('music-toggle-btn');
     if (musicToggle) {
-      musicToggle.addEventListener('click', () => {
-        const isPlaying = window.soundEngine.toggleMusic();
-        musicToggle.classList.toggle('active', isPlaying);
-        musicToggle.textContent = isPlaying ? '🎵 Music: ON' : '🎵 Music';
+      musicToggle.addEventListener('click', async () => {
+        const track = await window.soundEngine.toggleMusic();
+        if (track) {
+          musicToggle.classList.add('active');
+          musicToggle.textContent = '🎵 Music: ON';
+          this.updateDisplay(`Now playing: ${track.name} 🎶`);
+        } else {
+          musicToggle.classList.remove('active');
+          musicToggle.textContent = '🎵 Music';
+        }
       });
     }
 
-
-    // Custom Item Modal actions
+    // Add Custom Item Modal
     const saveCustomBtn = document.getElementById('save-custom-item-btn');
     if (saveCustomBtn) {
       saveCustomBtn.addEventListener('click', () => this.saveCustomItem());
@@ -672,6 +629,34 @@ class CashRegisterApp {
     const cancelCustomBtn = document.getElementById('cancel-custom-item-btn');
     if (cancelCustomBtn) {
       cancelCustomBtn.addEventListener('click', () => this.closeCustomItemDialog());
+    }
+
+    const resetDefaultsBtn = document.getElementById('reset-defaults-btn');
+    if (resetDefaultsBtn) {
+      resetDefaultsBtn.addEventListener('click', () => {
+        if (confirm('Restore the original 12 store items?')) {
+          this.resetDefaultItems();
+        }
+      });
+    }
+
+    // Edit Item Modal
+    const saveEditBtn = document.getElementById('save-edit-item-btn');
+    if (saveEditBtn) {
+      saveEditBtn.addEventListener('click', () => this.saveEditedItem());
+    }
+
+    const deleteItemBtn = document.getElementById('delete-item-btn');
+    if (deleteItemBtn) {
+      deleteItemBtn.addEventListener('click', () => {
+        const id = document.getElementById('edit-item-id').value;
+        this.deleteItem(id);
+      });
+    }
+
+    const cancelEditBtn = document.getElementById('cancel-edit-item-btn');
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener('click', () => this.closeEditItemDialog());
     }
   }
 
@@ -690,10 +675,19 @@ class CashRegisterApp {
       panel.classList.toggle('active', panel.id === `tab-${tabId}`);
     });
 
-    // Auto-open cash drawer when switching to cash tab
-    if (tabId === 'cash') {
-      this.openCashDrawer();
-    } else if (tabId === 'card') {
+    // Update bottom dock button state
+    const dockBtn = document.getElementById('dock-action-btn');
+    if (dockBtn) {
+      if (tabId === 'card') {
+        dockBtn.textContent = '🍎 BACK TO ITEMS';
+        dockBtn.classList.add('back-items-mode');
+      } else {
+        dockBtn.textContent = '💳 CARD MACHINE';
+        dockBtn.classList.remove('back-items-mode');
+      }
+    }
+
+    if (tabId === 'card') {
       this.resetCardReader();
     }
   }

@@ -93,7 +93,7 @@
         </div>
       </section>
 
-      <!-- Navigation Tabs (Items / Card / Cash / Keypad) -->
+      <!-- Navigation Tabs (Items / Card / Keypad) -->
       <nav class="mode-tabs-bar" role="tablist">
         <button class="tab-btn active" data-tab="items">
           <span class="tab-emoji">🍎</span>
@@ -102,10 +102,6 @@
         <button class="tab-btn" data-tab="card">
           <span class="tab-emoji">💳</span>
           <span class="tab-title">Card Machine</span>
-        </button>
-        <button class="tab-btn" data-tab="cash">
-          <span class="tab-emoji">💵</span>
-          <span class="tab-title">Cash Drawer</span>
         </button>
         <button class="tab-btn" data-tab="keypad">
           <span class="tab-emoji">🔢</span>
@@ -184,93 +180,6 @@
         </div>
       </section>
 
-      <!-- TAB 3: PRETEND CASH REGISTER DRAWER -->
-      <section id="tab-cash" class="tab-panel">
-        <div class="cash-register-panel">
-          
-          <div class="cash-status-banner">
-            <div class="cash-amount-row">
-              <div class="cash-stat">
-                <span class="stat-sub">TOTAL DUE:</span>
-                <span id="cash-due-amount" class="stat-main">$0.00</span>
-              </div>
-              <div class="cash-stat">
-                <span class="stat-sub">PAID IN:</span>
-                <span id="cash-tendered-val" class="stat-main tender-color">$0.00</span>
-              </div>
-              <div class="cash-stat">
-                <span class="stat-sub">CHANGE:</span>
-                <span id="cash-change-val" class="stat-main change-color">$0.00</span>
-              </div>
-            </div>
-            <div id="cash-change-tip" class="cash-change-tip">Tap bills & coins or quick buttons to pay!</div>
-          </div>
-
-          <!-- Drawer Opener Bell Button -->
-          <div class="cash-bell-action">
-            <button id="open-drawer-btn" class="drawer-bell-btn">
-              🔔 POP OPEN CASH DRAWER (KA-CHING!)
-            </button>
-          </div>
-
-          <!-- Quick Cash Amounts -->
-          <div class="quick-cash-row">
-            <button class="quick-cash-btn exact-btn" data-cash="EXACT">⭐ Exact Cash</button>
-            <button class="quick-cash-btn" data-cash="1">+$1</button>
-            <button class="quick-cash-btn" data-cash="5">+$5</button>
-            <button class="quick-cash-btn" data-cash="10">+$10</button>
-            <button class="quick-cash-btn" data-cash="20">+$20</button>
-          </div>
-
-          <!-- Cash Tray / Drawer Compartments -->
-          <div id="cash-drawer-section" class="cash-drawer-tray">
-            <div class="drawer-handle">══════ CASH DRAWER ══════</div>
-
-            <!-- Paper Bills Compartment -->
-            <div class="bills-compartment">
-              <button class="drawer-money-btn bill-btn bill-1" data-val="1">
-                <span class="bill-denom">$1</span>
-                <span class="bill-label">ONE</span>
-              </button>
-              <button class="drawer-money-btn bill-btn bill-5" data-val="5">
-                <span class="bill-denom">$5</span>
-                <span class="bill-label">FIVE</span>
-              </button>
-              <button class="drawer-money-btn bill-btn bill-10" data-val="10">
-                <span class="bill-denom">$10</span>
-                <span class="bill-label">TEN</span>
-              </button>
-              <button class="drawer-money-btn bill-btn bill-20" data-val="20">
-                <span class="bill-denom">$20</span>
-                <span class="bill-label">TWENTY</span>
-              </button>
-            </div>
-
-            <!-- Coins Compartment -->
-            <div class="coins-compartment">
-              <button class="drawer-money-btn coin-btn coin-penny" data-val="0.01">
-                <span class="coin-val">1¢</span>
-                <span class="coin-label">Penny</span>
-              </button>
-              <button class="drawer-money-btn coin-btn coin-nickel" data-val="0.05">
-                <span class="coin-val">5¢</span>
-                <span class="coin-label">Nickel</span>
-              </button>
-              <button class="drawer-money-btn coin-btn coin-dime" data-val="0.10">
-                <span class="coin-val">10¢</span>
-                <span class="coin-label">Dime</span>
-              </button>
-              <button class="drawer-money-btn coin-btn coin-quarter" data-val="0.25">
-                <span class="coin-val">25¢</span>
-                <span class="coin-label">Quarter</span>
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
       <!-- TAB 4: MANUAL NUMPAD KEYPAD -->
       <section id="tab-keypad" class="tab-panel">
         <div class="keypad-panel-container">
@@ -313,11 +222,8 @@
 
     <!-- Bottom Quick Action Dock -->
     <footer class="toy-bottom-dock">
-      <button class="dock-action-btn pay-card-dock" onclick="window.app.switchTab('card')">
-        💳 SCAN CARD
-      </button>
-      <button class="dock-action-btn pay-cash-dock" onclick="window.app.switchTab('cash')">
-        💵 CASH / CHANGE
+      <button id="dock-action-btn" class="dock-action-btn pay-card-dock" onclick="window.app.switchTab(window.app.activeTab === 'card' ? 'items' : 'card')">
+        💳 CARD MACHINE
       </button>
     </footer>
 
@@ -396,6 +302,37 @@
       <div class="modal-btn-row">
         <button id="cancel-custom-item-btn" class="modal-secondary-btn">Cancel</button>
         <button id="save-custom-item-btn" class="modal-primary-btn">Add to Store ⭐</button>
+      </div>
+      <div class="modal-reset-row">
+        <button id="reset-defaults-btn" class="modal-text-link">🔄 Reset to Original 12 Items</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT ITEM MODAL -->
+  <div id="edit-item-modal" class="custom-modal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="custom-modal-content">
+      <h3>✏️ Edit Item</h3>
+      <input type="hidden" id="edit-item-id">
+      <div class="form-group">
+        <label for="edit-item-name">Item Name:</label>
+        <input type="text" id="edit-item-name" placeholder="Item Name" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label for="edit-item-price">Price ($):</label>
+        <input type="number" id="edit-item-price" step="0.25" min="0.01" max="99" placeholder="2.50">
+      </div>
+      <div class="form-group">
+        <label for="edit-item-emoji">Emoji Icon:</label>
+        <input type="text" id="edit-item-emoji" value="🍎" maxlength="2">
+      </div>
+      <div class="modal-btn-row">
+        <button id="delete-item-btn" class="modal-danger-btn">🗑️ Delete</button>
+        <button id="save-edit-item-btn" class="modal-primary-btn">💾 Save</button>
+      </div>
+      <div class="modal-cancel-row">
+        <button id="cancel-edit-item-btn" class="modal-secondary-btn">Cancel</button>
       </div>
     </div>
   </div>

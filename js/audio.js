@@ -405,65 +405,163 @@ class SoundEngine {
     osc.stop(now + 0.18);
   }
 
-  // Background Music Loop
+  initTracks() {
+    this.tracks = [
+      {
+        name: 'Sunshine Marimba',
+        stepDuration: 250,
+        melody: [
+          { note: 523.25, dur: 0.2 },  // C5
+          { note: 659.25, dur: 0.2 },  // E5
+          { note: 783.99, dur: 0.2 },  // G5
+          { note: 880.00, dur: 0.32 }, // A5
+          { note: 783.99, dur: 0.2 },  // G5
+          { note: 659.25, dur: 0.2 },  // E5
+          { note: 587.33, dur: 0.32 }, // D5
+          { note: 523.25, dur: 0.38 }, // C5
+          { note: 659.25, dur: 0.2 },  // E5
+          { note: 783.99, dur: 0.2 },  // G5
+          { note: 880.00, dur: 0.2 },  // A5
+          { note: 1046.50, dur: 0.32 },// C6
+          { note: 880.00, dur: 0.2 },  // A5
+          { note: 783.99, dur: 0.2 },  // G5
+          { note: 659.25, dur: 0.32 }, // E5
+          { note: 587.33, dur: 0.38 }  // D5
+        ],
+        bass: [261.63, 261.63, 329.63, 329.63, 392.00, 392.00, 329.63, 261.63]
+      },
+      {
+        name: 'Toy Carnival March',
+        stepDuration: 200,
+        melody: [
+          { note: 698.46, dur: 0.16 }, // F5
+          { note: 698.46, dur: 0.16 }, // F5
+          { note: 880.00, dur: 0.18 }, // A5
+          { note: 1046.50, dur: 0.28 },// C6
+          { note: 880.00, dur: 0.16 }, // A5
+          { note: 783.99, dur: 0.16 }, // G5
+          { note: 932.33, dur: 0.18 }, // Bb5
+          { note: 1174.66, dur: 0.28 },// D6
+          { note: 1046.50, dur: 0.18 },// C6
+          { note: 932.33, dur: 0.16 }, // Bb5
+          { note: 880.00, dur: 0.18 }, // A5
+          { note: 783.99, dur: 0.18 }, // G5
+          { note: 698.46, dur: 0.35 }  // F5
+        ],
+        bass: [349.23, 440.00, 392.00, 523.25, 440.00, 349.23]
+      },
+      {
+        name: 'Sparkle Music Box',
+        stepDuration: 220,
+        melody: [
+          { note: 783.99, dur: 0.18 }, // G5
+          { note: 987.77, dur: 0.18 }, // B5
+          { note: 1174.66, dur: 0.18 },// D6
+          { note: 1567.98, dur: 0.28 },// G6
+          { note: 1318.51, dur: 0.18 },// E6
+          { note: 1046.50, dur: 0.18 },// C6
+          { note: 783.99, dur: 0.25 }, // G5
+          { note: 880.00, dur: 0.18 }, // A5
+          { note: 1046.50, dur: 0.18 },// C6
+          { note: 1318.51, dur: 0.18 },// E6
+          { note: 1760.00, dur: 0.28 },// A6
+          { note: 1567.98, dur: 0.18 },// G6
+          { note: 1174.66, dur: 0.18 },// D6
+          { note: 987.77, dur: 0.32 }  // B5
+        ],
+        bass: [392.00, 523.25, 440.00, 587.33, 392.00]
+      },
+      {
+        name: 'Bubble Pop Parade',
+        stepDuration: 180,
+        melody: [
+          { note: 659.25, dur: 0.14 }, // E5
+          { note: 783.99, dur: 0.14 }, // G5
+          { note: 1046.50, dur: 0.16 },// C6
+          { note: 1318.51, dur: 0.22 },// E6
+          { note: 1046.50, dur: 0.14 },// C6
+          { note: 987.77, dur: 0.14 }, // B5
+          { note: 880.00, dur: 0.20 }, // A5
+          { note: 783.99, dur: 0.16 }, // G5
+          { note: 880.00, dur: 0.14 }, // A5
+          { note: 1046.50, dur: 0.14 },// C6
+          { note: 1318.51, dur: 0.16 },// E6
+          { note: 1567.98, dur: 0.24 },// G6
+          { note: 1318.51, dur: 0.14 },// E6
+          { note: 1174.66, dur: 0.14 },// D6
+          { note: 1046.50, dur: 0.20 } // C6
+        ],
+        bass: [261.63, 329.63, 392.00, 329.63, 261.63, 329.63]
+      },
+      {
+        name: 'Starry Night Lullaby',
+        stepDuration: 320,
+        melody: [
+          { note: 523.25, dur: 0.30 }, // C5
+          { note: 587.33, dur: 0.30 }, // D5
+          { note: 659.25, dur: 0.30 }, // E5
+          { note: 783.99, dur: 0.45 }, // G5
+          { note: 659.25, dur: 0.30 }, // E5
+          { note: 587.33, dur: 0.30 }, // D5
+          { note: 523.25, dur: 0.55 }, // C5
+          { note: 659.25, dur: 0.28 }, // E5
+          { note: 587.33, dur: 0.28 }, // D5
+          { note: 523.25, dur: 0.28 }, // C5
+          { note: 392.00, dur: 0.30 }, // G4
+          { note: 440.00, dur: 0.30 }, // A4
+          { note: 523.25, dur: 0.50 }, // C5
+          { note: 659.25, dur: 0.60 }  // E5
+        ],
+        bass: [130.81, 196.00, 220.00, 196.00, 130.81, 196.00, 174.61, 196.00]
+      }
+    ];
+  }
+
+  // Background Music Loop (random track start)
   async toggleMusic() {
     await this.ensureReady();
     if (this.musicPlaying) {
       this.stopMusic();
-      return false;
+      return null;
     } else {
-      this.startMusic();
-      return true;
+      return await this.startMusic();
     }
   }
 
   async startMusic() {
-    if (this.musicPlaying) return;
+    if (this.musicPlaying) return this.tracks ? this.tracks[this.currentTrackIndex] : null;
     await this.ensureReady();
+    if (!this.tracks) this.initTracks();
+
+    // Pick a random track from the available melodies
+    let nextTrack = Math.floor(Math.random() * this.tracks.length);
+    if (this.currentTrackIndex !== undefined && this.tracks.length > 1) {
+      while (nextTrack === this.currentTrackIndex) {
+        nextTrack = Math.floor(Math.random() * this.tracks.length);
+      }
+    }
+    this.currentTrackIndex = nextTrack;
+    const track = this.tracks[this.currentTrackIndex];
+
     this.musicPlaying = true;
     this.musicStep = 0;
 
-    const melody = [
-      { note: 523.25, dur: 0.2 },
-      { note: 659.25, dur: 0.2 },
-      { note: 783.99, dur: 0.2 },
-      { note: 880.00, dur: 0.35 },
-      { note: 783.99, dur: 0.2 },
-      { note: 659.25, dur: 0.2 },
-      { note: 587.33, dur: 0.35 },
-      { note: 523.25, dur: 0.4 },
-
-      { note: 659.25, dur: 0.2 },
-      { note: 783.99, dur: 0.2 },
-      { note: 880.00, dur: 0.2 },
-      { note: 1046.50, dur: 0.35 },
-      { note: 880.00, dur: 0.2 },
-      { note: 783.99, dur: 0.2 },
-      { note: 659.25, dur: 0.35 },
-      { note: 587.33, dur: 0.4 }
-    ];
-
-    const bass = [
-      261.63, 261.63, 329.63, 329.63,
-      392.00, 392.00, 329.63, 261.63
-    ];
-
-    const stepDuration = 260;
-
     this.musicTimer = setInterval(() => {
       if (!this.musicPlaying || !this.ctx) return;
-      const step = this.musicStep % melody.length;
-      const item = melody[step];
+      const step = this.musicStep % track.melody.length;
+      const item = track.melody[step];
 
-      this.playSynthNote(item.note, item.dur, 'sine', 0.22);
+      this.playSynthNote(item.note, item.dur, 'sine', 0.2);
 
       if (step % 2 === 0) {
-        const bassFreq = bass[(step / 2) % bass.length];
-        this.playSynthNote(bassFreq / 2, 0.35, 'triangle', 0.15);
+        const bassFreq = track.bass[(step / 2) % track.bass.length];
+        this.playSynthNote(bassFreq / 2, 0.3, 'triangle', 0.13);
       }
 
       this.musicStep++;
-    }, stepDuration);
+    }, track.stepDuration);
+
+    return track;
   }
 
   playSynthNote(freq, dur, type = 'sine', vol = 0.2) {
