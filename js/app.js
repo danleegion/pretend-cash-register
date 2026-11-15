@@ -497,6 +497,18 @@ class CashRegisterApp {
       });
     });
 
+    // Bottom Dock Action Button (toggles Card Machine <-> Items)
+    const dockActionBtn = document.getElementById('dock-action-btn');
+    if (dockActionBtn) {
+      dockActionBtn.addEventListener('click', () => {
+        if (this.activeTab === 'card') {
+          this.switchTab('items');
+        } else {
+          this.switchTab('card');
+        }
+      });
+    }
+
     // Scanner Gun button on header
     const scannerGunBtn = document.getElementById('scanner-gun-btn');
     if (scannerGunBtn) {

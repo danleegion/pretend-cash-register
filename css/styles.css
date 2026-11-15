@@ -580,7 +580,7 @@ body {
 
 .card-tap-pad {
   width: 100%;
-  min-height: 88px;
+  min-height: 70px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   border: 3px dashed #48CAE4;
@@ -603,7 +603,7 @@ body {
 .tap-glow-rings {
   position: absolute;
   top: 50%; left: 50%;
-  width: 60px; height: 60px;
+  width: 50px; height: 50px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   border: 3px solid rgba(72,202,228,0.3);
@@ -613,14 +613,14 @@ body {
 .tap-glow-rings::before, .tap-glow-rings::after {
   content: '';
   position: absolute;
-  inset: -16px;
+  inset: -12px;
   border-radius: 50%;
   border: 2px solid rgba(72,202,228,0.15);
   animation: ringPulse 2s infinite;
 }
 
 .tap-glow-rings::before { animation-delay: 0.5s; }
-.tap-glow-rings::after  { animation-delay: 1s; inset: -32px; }
+.tap-glow-rings::after  { animation-delay: 1s; inset: -24px; }
 
 @keyframes ringPulse {
   0%   { transform: scale(0.9); opacity: 0.6; }
@@ -632,28 +632,28 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   position: relative;
   z-index: 1;
 }
 
-.tap-huge-icon      { font-size: 2rem; }
-.tap-prompt-title   { font-size: 0.82rem; font-weight: 800; color: #48CAE4; letter-spacing: 0.04em; text-align: center; }
-.tap-prompt-sub     { font-size: 0.6rem; color: #aaa; text-align: center; }
+.tap-huge-icon      { font-size: 1.6rem; }
+.tap-prompt-title   { font-size: 0.78rem; font-weight: 800; color: #48CAE4; letter-spacing: 0.04em; text-align: center; }
+.tap-prompt-sub     { font-size: 0.58rem; color: #aaa; text-align: center; }
 
 /* Pretend Credit Card Widget */
 .pretend-card-widget {
-  width: 200px;
-  height: 116px;
+  width: 170px;
+  height: 96px;
   background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
-  border-radius: 14px;
+  border-radius: 12px;
   border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 8px 12px;
   cursor: pointer;
   animation: cardFloat 3s ease-in-out infinite;
   transition: transform 0.1s;
@@ -666,27 +666,27 @@ body {
 
 @keyframes cardFloat {
   0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50%       { transform: translateY(-6px) rotate(1deg); }
+  50%       { transform: translateY(-4px) rotate(1deg); }
 }
 
 .card-chip {
-  width: 30px; height: 22px;
+  width: 24px; height: 18px;
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid rgba(0,0,0,0.2);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
 .card-contactless-mark {
   position: absolute;
-  right: 14px;
-  top: 10px;
-  font-size: 1.2rem;
+  right: 12px;
+  top: 8px;
+  font-size: 1rem;
   opacity: 0.9;
 }
 
 .card-bank-name {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: rgba(255,255,255,0.8);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -694,7 +694,7 @@ body {
 }
 
 .card-number {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: #fff;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -702,7 +702,7 @@ body {
 }
 
 .card-holder-name {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: rgba(255,255,255,0.9);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -710,10 +710,10 @@ body {
 
 .tap-me-hint {
   position: absolute;
-  bottom: -22px;
+  bottom: -18px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #48CAE4;
   font-weight: 700;
   white-space: nowrap;
@@ -729,7 +729,7 @@ body {
 .pos-alt-actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .alt-pos-btn {
@@ -737,17 +737,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 9px 6px;
+  gap: 2px;
+  padding: 8px 4px;
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-family: inherit;
   font-weight: 700;
   color: #fff;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.3);
   transition: transform 0.08s, box-shadow 0.08s;
-  min-height: 56px;
+  min-height: 46px;
 }
 
 .alt-pos-btn:active {
@@ -758,233 +758,18 @@ body {
 .chip-slot-btn { background: linear-gradient(135deg, #2ecc71, #27ae60); }
 .swipe-slot-btn{ background: linear-gradient(135deg, #e67e22, #d35400); }
 
-.btn-icon { font-size: 1.4rem; }
-.btn-text { font-size: 0.68rem; letter-spacing: 0.03em; }
+.btn-icon { font-size: 1.3rem; }
+.btn-text { font-size: 0.65rem; letter-spacing: 0.03em; }
 
 /* =========================================================
-   TAB 3: CASH REGISTER DRAWER
-   ========================================================= */
-.cash-register-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 8px 4px;
-}
-
-/* Amount Row */
-.cash-status-banner {
-  background: linear-gradient(135deg, #fff9c4, #fff3cd);
-  border-radius: var(--radius-lg);
-  border: 3px solid var(--brand-yellow);
-  padding: 10px 12px;
-  box-shadow: var(--shadow-toy);
-}
-
-.cash-amount-row {
-  display: flex;
-  gap: 10px;
-  justify-content: space-around;
-  margin-bottom: 6px;
-}
-
-.cash-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.stat-sub {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #888;
-  letter-spacing: 0.06em;
-}
-
-.stat-main {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #2D2D2D;
-}
-
-.tender-color  { color: var(--brand-orange); }
-.change-color  { color: var(--brand-green); }
-.change-positive { color: #2ECC71 !important; }
-
-.cash-change-tip {
-  font-size: 0.72rem;
-  color: #666;
-  text-align: center;
-  font-weight: 600;
-}
-
-/* Ka-Ching Drawer Bell Button */
-.cash-bell-action { text-align: center; }
-
-.drawer-bell-btn {
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 50px;
-  background: linear-gradient(135deg, var(--brand-green), #2d9c6e);
-  color: #fff;
-  box-shadow: 0 6px 0 #1a6b4a, var(--shadow-toy);
-  cursor: pointer;
-  letter-spacing: 0.03em;
-  width: 100%;
-  transition: transform 0.08s, box-shadow 0.08s;
-  animation: bellWiggle 4s ease-in-out infinite;
-}
-
-.drawer-bell-btn:active {
-  transform: translateY(5px);
-  box-shadow: 0 1px 0 #1a6b4a;
-  animation: none;
-}
-
-@keyframes bellWiggle {
-  0%, 90%, 100% { transform: rotate(0deg); }
-  92%  { transform: rotate(-3deg); }
-  94%  { transform: rotate(3deg); }
-  96%  { transform: rotate(-2deg); }
-  98%  { transform: rotate(2deg); }
-}
-
-/* Quick Cash Buttons Row */
-.quick-cash-row {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.quick-cash-btn {
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 800;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 50px;
-  background: var(--brand-blue);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-  white-space: nowrap;
-  transition: transform 0.08s, box-shadow 0.08s;
-  flex-shrink: 0;
-  min-height: 48px;
-}
-
-.quick-cash-btn:active {
-  transform: translateY(3px);
-  box-shadow: none;
-}
-
-.exact-btn { background: linear-gradient(135deg, #FFD166, #FF9F1C); color: #2D2D2D; }
-
-/* Cash Drawer Tray */
-.cash-drawer-tray {
-  background: linear-gradient(170deg, #3B2F1E, #5A3D22);
-  border-radius: var(--radius-xl);
-  border: 5px solid #2a1f10;
-  box-shadow: var(--shadow-toy), inset 0 4px 20px rgba(0,0,0,0.5);
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s;
-  padding: 0 10px;
-}
-
-.cash-drawer-tray.drawer-open {
-  max-height: 400px;
-  padding: 12px 10px;
-}
-
-.drawer-handle {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0.08em;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-/* Bills Compartment */
-.bills-compartment {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.bill-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 12px 4px;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-family: inherit;
-  min-height: 72px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
-  border: 2px solid rgba(255,255,255,0.15);
-  transition: transform 0.08s, box-shadow 0.08s;
-}
-
-.bill-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.3);
-}
-
-.bill-1  { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; }
-.bill-5  { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; }
-.bill-10 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; }
-.bill-20 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; }
-
-.bill-denom { font-size: 1.2rem; font-weight: 800; }
-.bill-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.85; }
-
-/* Coins Compartment */
-.coins-compartment {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.coin-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.08s, box-shadow 0.08s;
-}
-
-.coin-btn:active {
-  transform: translateY(2px) scale(0.95);
-}
-
-.coin-penny   { width: 60px; height: 60px; background: linear-gradient(135deg, #b87333, #cd7f32); color: #fff; box-shadow: 0 4px 0 #7a4a1e; }
-.coin-nickel  { width: 65px; height: 65px; background: linear-gradient(135deg, #a8a8a8, #c0c0c0); color: #333; box-shadow: 0 4px 0 #808080; }
-.coin-dime    { width: 55px; height: 55px; background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #333; box-shadow: 0 4px 0 #909090; }
-.coin-quarter { width: 72px; height: 72px; background: linear-gradient(135deg, #c0c0c0, #d8d8d8); color: #333; box-shadow: 0 5px 0 #888; }
-
-.coin-val   { font-size: 0.95rem; font-weight: 800; }
-.coin-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; }
-
-/* =========================================================
-   TAB 4: MANUAL KEYPAD
+   TAB 3: MANUAL KEYPAD (Only shown when active)
    ========================================================= */
 
-#tab-keypad {
+#tab-keypad:not(.active) {
+  display: none !important;
+}
+
+#tab-keypad.active {
   padding: 6px 4px 4px;
   flex: 1;
   display: flex;
@@ -1160,7 +945,7 @@ body {
 }
 
 .pay-card-dock { background: linear-gradient(135deg, #667eea, #764ba2); }
-.pay-cash-dock { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.dock-action-btn.back-items-mode { background: linear-gradient(135deg, var(--brand-pink), var(--brand-purple)); }
 
 /* =========================================================
    RECEIPT PAPER
@@ -1650,11 +1435,13 @@ body {
   .item-btn-name       { font-size: 0.65rem; }
 }
 
-/* When on Keypad tab, collapse the empty cart scroll container so the keypad expands into maximum area */
-#app-root[data-active-tab="keypad"] .cart-items-list {
+/* When on Keypad or Card tab, collapse the empty cart scroll container so the content expands cleanly */
+#app-root[data-active-tab="keypad"] .cart-items-list,
+#app-root[data-active-tab="card"] .cart-items-list {
   display: none;
 }
-#app-root[data-active-tab="keypad"] .register-screen-box {
+#app-root[data-active-tab="keypad"] .register-screen-box,
+#app-root[data-active-tab="card"] .register-screen-box {
   padding-bottom: 2px;
 }
 

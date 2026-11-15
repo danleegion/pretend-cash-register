@@ -1,7 +1,7 @@
-# 🛒 Kids Toy Cash Register — Agent Handover Document
+# 🛒 Kids Toy Cash Register — Project Documentation & Handover
 
-> **Status:** CSS created and all files are in place. App should render correctly.  
-> **Last worked on:** 2026-11-07 by Antigravity (Claude Sonnet 4.6)
+> **Status:** Fully mobile-optimized, offline PWA with ZXing camera barcode scanner, card terminal, and persistent item editing.  
+> **Last updated:** November 2026
 
 ---
 
@@ -9,67 +9,41 @@
 
 ```
 pretend-cash-register/
-├── index.html          # Main HTML shell (all UI structure, modals, tabs)
-├── manifest.json       # PWA manifest (for GitHub Pages install prompt)
+├── index.html          # Main HTML shell (3-tab UI, barcode viewfinder, modals)
+├── manifest.json       # PWA manifest & home screen configuration
 ├── css/
-│   └── styles.css      # ← NEWLY CREATED — full mobile-first CSS
+│   └── styles.css      # Compact, kid-friendly mobile CSS (iPhone 13 Pro optimized)
 ├── js/
-│   ├── app.js          # Main app logic (cart, payments, tabs, events)
-│   ├── audio.js        # Web Audio API sound engine + speech synth
-│   ├── confetti.js     # Canvas confetti burst particle system
-│   └── scanner.js      # Barcode scanner modal + BarcodeDetector API
+│   ├── app.js          # App controller: cart, localStorage items, POS terminal, tabs
+│   ├── audio.js        # Web Audio API sound engine (5 random synth tracks + SFX)
+│   ├── confetti.js     # Canvas celebratory confetti burst particle system
+│   ├── scanner.js      # ZXing video stream barcode reader + OpenFoodFacts lookup
+│   └── zxing.min.js    # Bundled standalone ZXing 1D/2D barcode decoder library
 └── assets/
-    └── make-icon.sh    # Placeholder; replace with real icon-192.png
+    ├── apple-touch-icon.png # 180x180 high-res home screen icon for iOS
+    ├── icon-192.png    # 192x192 PWA launcher icon
+    └── icon-512.png    # 512x512 PWA launcher icon
 ```
 
 ---
 
-## ✅ What Is Done
+## ✅ Implemented Features
 
-| Feature | Status |
-|---|---|
-| Mobile layout (iPhone 13 Pro, 390px) | ✅ Done |
-| Safe area insets (notch, home bar) | ✅ Done |
-| Colorful kid-friendly UI with Fredoka font | ✅ Done |
-| **4 Tabs:** Items / Card Machine / Cash Drawer / Keypad | ✅ Done |
-| Quick-tap item grid (12 preset groceries/toys) | ✅ Done |
-| ➕ Custom item creator modal | ✅ Done |
-| Pretend POS card terminal with LED indicators | ✅ Done |
-| Tap / Chip / Swipe card interactions | ✅ Done |
-| Animated floating credit card widget | ✅ Done |
-| Approval confetti burst + ding chime | ✅ Done |
-| Cash register drawer (animated KA-CHING open) | ✅ Done |
-| Bills ($1/$5/$10/$20) & Coins (penny→quarter) | ✅ Done |
-| Change calculation + denomination breakdown text | ✅ Done |
-| Thermal receipt printer (slide-out animation) | ✅ Done |
-| **Scanner** – laser viewfinder modal | ✅ Done |
-| **Scanner** – laser viewfinder modal | ✅ Done |
-| Scanner uses real `BarcodeDetector` API if available | ✅ Done |
-| **Real barcode → product lookup (Open Food Facts + UPC Item DB)** | ✅ Done |
-| Manual barcode number entry with 🔍 LOOK UP button | ✅ Done |
-| Product found card: image, name, brand, editable price, ADD TO CART | ✅ Done |
-| Product not found fallback with custom add | ✅ Done |
-| Pretend BEEP! scan button (adds random item, no lookup) | ✅ Done |
-| **Keypad** – Full-screen 4x4 matrix, massive chunky buttons | ✅ Done |
-| Large 3-row ENTER key (`✅ ADD ITEM`) | ✅ Done |
-| Double Zero `00` quick-entry key | ✅ Done |
-| PWA icons generated (192px and 512px) | ✅ Done |
-| Voice synthesis removed per user request (pure sound effects) | ✅ Done |
-| Multi-layered mechanical cash register KA-CHING sound | ✅ Done |
-| Real barcode online product lookup (Open Food Facts + UPC Item DB) | ✅ Done |
-| **Web Audio API** — zero deps, offline sounds | ✅ Done |
-| KA-CHING bell + drawer spring + coin jingle | ✅ Done |
-| Credit card 4-beep contactless sequence | ✅ Done |
-| Approval chime (C-E-G-C arpeggio) | ✅ Done |
-| Speech synthesis voice announcements | ✅ Done |
-| Background music (pentatonic music-box loop) | ✅ Done |
-| SFX / Voice / Music toggles in header | ✅ Done |
-| Haptic vibration on mobile | ✅ Done |
-| Confetti canvas particle system (burst on payment) | ✅ Done |
-| PWA manifest (installable) | ✅ Done |
-| Bounce-pop animation on total | ✅ Done |
-| `prefers-reduced-motion` accessibility support | ✅ Done |
-| GitHub Pages ready (100% static, no server) | ✅ Done |
+| Feature | Details | Status |
+|---|---|---|
+| **Compact Mobile Viewport** | Zero unnecessary vertical scroll on iPhone 13 Pro (390×844) | ✅ Done |
+| **Navigation Tabs** | 3 clean tabs: 🍎 Items, 💳 Card Machine, 🔢 Keypad | ✅ Done |
+| **Item Persistence** | Custom items, edits, and deletes saved to `localStorage` | ✅ Done |
+| **Item Editing** | Small ✏️ button on each card to edit name, price, emoji, or delete | ✅ Done |
+| **Reset Items** | One-tap button to restore original 12 default store items | ✅ Done |
+| **Keypad Scoping** | Keypad only renders when Keypad tab is active (no background spill) | ✅ Done |
+| **Card Terminal (POS)** | Compact tap pad, floating pretend card, chip & swipe buttons | ✅ Done |
+| **Cart Collapse** | Cart list collapses on Card & Keypad tabs to optimize height | ✅ Done |
+| **Randomized Music** | 5 joyful Web Audio tracks, randomly selected on play | ✅ Done |
+| **Web Audio Stability** | Persistent gesture unlock + auto-wake on visibility changes | ✅ Done |
+| **Barcode Scanner** | ZXing camera stream scanner + OpenFoodFacts online lookup | ✅ Done |
+| **Thermal Receipt** | Animated slide-out receipt with tear button | ✅ Done |
+| **iOS Home Icon** | High-res `apple-touch-icon.png` included for Safari home screen | ✅ Done |
 
 ---
 
